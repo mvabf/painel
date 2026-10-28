@@ -49,8 +49,15 @@ func fetchAgenda(url, email string) agendaResult {
 	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 	end := start.AddDate(0, 0, 1)
 
+	// O gocal só esconde uma ocorrência remarcada (RECURRENCE-ID) se a versão
+	// remarcada também estiver na janela, e o filtro de janela dele deixa de
+	// fora eventos que começam exatamente à meia-noite. Por isso: SkipBounds
+	// traz todos os eventos avulsos, a janela das recorrências ganha 1s de
+	// folga e o recorte de hoje é feito por overlaps logo abaixo.
+	winStart, winEnd := start.Add(-time.Second), end.Add(time.Second)
 	c := gocal.NewParser(body)
-	c.Start, c.End = &start, &end
+	c.Start, c.End = &winStart, &winEnd
+	c.SkipBounds = true
 	c.AllDayEventsTZ = time.Local
 	c.Strict.Mode = gocal.StrictModeFailEvent
 	c.Duplicate.Mode = gocal.DuplicateModeKeepLast
@@ -74,14 +81,23 @@ func fetchAgenda(url, email string) agendaResult {
 		} else {
 			ev.End = ev.Start
 		}
+		// Fica se ocupa algum pedaço de hoje; eventos de duração zero, se começam hoje.
+		overlaps := ev.Start.Before(end) && ev.End.After(start)
+		instant := ev.End.Equal(ev.Start) && !ev.Start.Before(start) && ev.Start.Before(end)
+		if !overlaps && !instant {
+			continue
+		}
 		res.Events = append(res.Events, ev)
 	}
 
-	sortEvents(res.Events)
+	res.Events = tidyEvents(res.Events)
 	return res
 }
 
-func sortEvents(events []event) {
+// tidyEvents ordena (dia inteiro primeiro, depois por horário) e remove
+// eventos idênticos: o feed do Google às vezes traz duas séries iguais que
+// a interface dele mostra como uma só.
+func tidyEvents(events []event) []event {
 	sort.SliceStable(events, func(i, j int) bool {
 		a, b := events[i], events[j]
 		if a.AllDay != b.AllDay {
@@ -89,6 +105,16 @@ func sortEvents(events []event) {
 		}
 		return a.Start.Before(b.Start)
 	})
+
+	seen := map[event]bool{}
+	out := events[:0]
+	for _, e := range events {
+		if !seen[e] {
+			seen[e] = true
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 // openICS aceita uma URL http(s) ou o caminho de um arquivo .ics local
