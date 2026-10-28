@@ -37,6 +37,11 @@ func TestDemoFrames(t *testing.T) {
 	}
 }
 
+func requested(p pr, at time.Time) pr {
+	p.RequestedAt = at
+	return p
+}
+
 func withStatus(p pr, ci, review string, conflict bool) pr {
 	p.CI, p.Review, p.Conflict = ci, review, conflict
 	return p
@@ -66,11 +71,13 @@ func demoModel(now time.Time, loaded bool) model {
 	m.prs = prsResult{
 		At: at(14, 59),
 		ToReview: []pr{
-			p("checkout", 482, "Corrige arredondamento do frete grátis", false),
-			p("api-pedidos", 1290, "Adiciona retry no webhook de pagamento", false),
-			p("app-mobile", 77, "Nova tela de rastreio", false),
+			requested(p("checkout", 482, "Corrige arredondamento do frete grátis", false), at(14, 59).Add(-4*24*time.Hour)),
+			requested(p("api-pedidos", 1290, "Adiciona retry no webhook de pagamento", false), at(14, 59).Add(-30*time.Hour)),
+			requested(p("app-mobile", 77, "Nova tela de rastreio", false), at(13, 12)),
 		},
-		TeamReview: 12,
+		ToReviewTotal: 3,
+		MineTotal:     4,
+		TeamReview:    12,
 		Mine: []pr{
 			withStatus(p("api-pedidos", 1287, "Cache na cotação de transportadoras", false), "SUCCESS", "APPROVED", false),
 			withStatus(p("checkout", 479, "Remove cupom expirado do carrinho", false), "FAILURE", "CHANGES_REQUESTED", false),

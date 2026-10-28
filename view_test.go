@@ -106,3 +106,20 @@ func TestMineSummary(t *testing.T) {
 		t.Errorf("sem nada a destacar deveria ser vazio, veio %q", got)
 	}
 }
+
+func TestReviewPRLine(t *testing.T) {
+	now := time.Date(2026, 10, 28, 15, 0, 0, 0, time.Local)
+	p := pr{Repo: "api", Number: 7, Title: "Título"}
+	cases := map[time.Duration]string{
+		20 * time.Minute:    "20m api#7 Título",
+		5 * time.Hour:       " 5h api#7 Título",
+		50 * time.Hour:      " 2d api#7 Título",
+		12 * 24 * time.Hour: "12d api#7 Título",
+	}
+	for ago, want := range cases {
+		p.RequestedAt = now.Add(-ago)
+		if got := ansi.Strip(reviewPRLine(p, now)); got != want {
+			t.Errorf("pedido há %v: got %q, want %q", ago, got, want)
+		}
+	}
+}

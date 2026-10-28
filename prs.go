@@ -20,6 +20,9 @@ type pr struct {
 	CI       string // "SUCCESS", "FAILURE", "ERROR", "PENDING", "EXPECTED" ou "" sem checks
 	Review   string // "APPROVED", "CHANGES_REQUESTED", "REVIEW_REQUIRED" ou ""
 	Conflict bool
+
+	// RequestedAt é quando pediram minha revisão (só na lista de revisões).
+	RequestedAt time.Time
 }
 
 type prsResult struct {
@@ -43,10 +46,16 @@ fragment PR on PullRequest {
   reviewDecision mergeable
   commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
 }
+fragment Requested on PullRequest {
+  timelineItems(itemTypes: [REVIEW_REQUESTED_EVENT], last: 20) {
+    nodes { ... on ReviewRequestedEvent { createdAt requestedReviewer { ... on User { login } } } }
+  }
+}
 query {
+  viewer { login }
   direct: search(query: "is:pr is:open user-review-requested:@me", type: ISSUE, first: 50) {
     issueCount
-    nodes { ...PR }
+    nodes { ...PR ...Requested }
   }
   all: search(query: "is:pr is:open review-requested:@me", type: ISSUE, first: 1) {
     issueCount
@@ -77,6 +86,14 @@ type gqlPR struct {
 			} `json:"commit"`
 		} `json:"nodes"`
 	} `json:"commits"`
+	TimelineItems struct {
+		Nodes []struct {
+			CreatedAt         time.Time `json:"createdAt"`
+			RequestedReviewer struct {
+				Login string `json:"login"`
+			} `json:"requestedReviewer"`
+		} `json:"nodes"`
+	} `json:"timelineItems"`
 }
 
 type gqlSearch struct {
@@ -100,6 +117,9 @@ func fetchPRs() prsResult {
 
 	var body struct {
 		Data struct {
+			Viewer struct {
+				Login string `json:"login"`
+			} `json:"viewer"`
 			Direct gqlSearch `json:"direct"`
 			All    gqlSearch `json:"all"`
 			Mine   gqlSearch `json:"mine"`
@@ -118,14 +138,18 @@ func fetchPRs() prsResult {
 	}
 
 	d := body.Data
-	res.ToReview = convertPRs(d.Direct.Nodes)
-	res.Mine = convertPRs(d.Mine.Nodes)
+	res.ToReview = convertPRs(d.Direct.Nodes, d.Viewer.Login)
+	res.Mine = convertPRs(d.Mine.Nodes, "")
+	// Quem espera há mais tempo vem primeiro.
+	sort.SliceStable(res.ToReview, func(i, j int) bool {
+		return res.ToReview[i].RequestedAt.Before(res.ToReview[j].RequestedAt)
+	})
 	res.ToReviewTotal, res.MineTotal = d.Direct.IssueCount, d.Mine.IssueCount
 	res.TeamReview = max(0, d.All.IssueCount-d.Direct.IssueCount)
 	return res
 }
 
-func convertPRs(nodes []gqlPR) []pr {
+func convertPRs(nodes []gqlPR, viewer string) []pr {
 	prs := make([]pr, 0, len(nodes))
 	for _, n := range nodes {
 		p := pr{
@@ -141,8 +165,31 @@ func convertPRs(nodes []gqlPR) []pr {
 		if c := n.Commits.Nodes; len(c) > 0 && c[0].Commit.StatusCheckRollup != nil {
 			p.CI = c[0].Commit.StatusCheckRollup.State
 		}
+		p.RequestedAt = requestedAt(n, viewer)
 		prs = append(prs, p)
 	}
 	sort.Slice(prs, func(i, j int) bool { return prs[i].UpdatedAt.After(prs[j].UpdatedAt) })
 	return prs
+}
+
+// requestedAt é o último pedido de revisão feito a mim. Sem esse evento (ex.:
+// pedido herdado de um time), usa o último pedido qualquer e, por fim, a
+// última atualização do PR.
+func requestedAt(n gqlPR, viewer string) time.Time {
+	var mine, anyone time.Time
+	for _, ev := range n.TimelineItems.Nodes {
+		if ev.CreatedAt.After(anyone) {
+			anyone = ev.CreatedAt
+		}
+		if viewer != "" && strings.EqualFold(ev.RequestedReviewer.Login, viewer) && ev.CreatedAt.After(mine) {
+			mine = ev.CreatedAt
+		}
+	}
+	switch {
+	case !mine.IsZero():
+		return mine
+	case !anyone.IsZero():
+		return anyone
+	}
+	return n.UpdatedAt
 }

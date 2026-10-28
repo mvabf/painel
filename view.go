@@ -53,8 +53,9 @@ func (m model) View() string {
 	if m.prs.TeamReview > 0 {
 		teamNote = fmt.Sprintf("+%d pedidos aos seus times", m.prs.TeamReview)
 	}
-	review := m.viewPRBox("Revisões pendentes", teamNote, m.prs.ToReview, m.prs.ToReviewTotal, pink, colWidth)
-	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, green, colWidth)
+	reviewLine := func(p pr) string { return reviewPRLine(p, m.now) }
+	review := m.viewPRBox("Revisões pendentes", teamNote, m.prs.ToReview, m.prs.ToReviewTotal, reviewLine, pink, colWidth)
+	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, prLine, green, colWidth)
 	agenda := m.viewAgendaBox(colWidth)
 
 	var body string
@@ -137,7 +138,7 @@ func (m model) viewNextEvent() string {
 }
 
 // viewPRBox e viewAgendaBox devolvem só o conteúdo; a borda é aplicada em View.
-func (m model) viewPRBox(title, note string, prs []pr, total int, color lipgloss.AdaptiveColor, width int) string {
+func (m model) viewPRBox(title, note string, prs []pr, total int, line func(pr) string, color lipgloss.AdaptiveColor, width int) string {
 	inner := width - 2 - 2 // borda + padding
 	titleStyle := lipgloss.NewStyle().Foreground(color).Bold(true)
 
@@ -164,7 +165,7 @@ func (m model) viewPRBox(title, note string, prs []pr, total int, color lipgloss
 			lines = append(lines, dimStyle.Render(fmt.Sprintf("+%d mais", max(total, len(prs))-maxListItems)))
 			break
 		}
-		lines = append(lines, ansi.Truncate(prLine(p), inner, "…"))
+		lines = append(lines, ansi.Truncate(line(p), inner, "…"))
 	}
 
 	return strings.Join(lines, "\n")
@@ -206,6 +207,36 @@ func prLine(p pr) string {
 
 	parts := append([]string{icon, dimStyle.Render(ref)}, tags...)
 	return strings.Join(append(parts, p.Title), " ")
+}
+
+// reviewPRLine mostra há quanto tempo o pedido de revisão espera: cinza até
+// 1 dia, amarelo até 3 e vermelho depois disso.
+func reviewPRLine(p pr, now time.Time) string {
+	ref := fmt.Sprintf("%s#%d", p.Repo, p.Number)
+	if p.IsDraft {
+		return dimStyle.Render(ref + " [draft] " + p.Title)
+	}
+
+	waited := now.Sub(p.RequestedAt)
+	style := dimStyle
+	switch {
+	case waited >= 3*24*time.Hour:
+		style = failStyle
+	case waited >= 24*time.Hour:
+		style = waitStyle
+	}
+	return style.Render(fmt.Sprintf("%3s", shortAge(waited))) + " " + dimStyle.Render(ref) + " " + p.Title
+}
+
+// shortAge: "45m", "5h", "3d".
+func shortAge(d time.Duration) string {
+	switch {
+	case d < time.Hour:
+		return fmt.Sprintf("%dm", max(0, int(d.Minutes())))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("%dh", int(d.Hours()))
+	}
+	return fmt.Sprintf("%dd", int(d.Hours()/24))
 }
 
 // mineSummary resume o que pede ação nos meus PRs, mesmo os que não cabem na lista.

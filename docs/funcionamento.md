@@ -32,6 +32,32 @@ times fica como informação secundária:
 O "+52" é a diferença entre as duas buscas. Se você já revisou um PR, o GitHub
 tira o pedido e ele sai das duas contagens.
 
+### Há quanto tempo cada revisão espera
+
+Em **Revisões pendentes**, cada PR começa com o tempo desde que pediram a sua
+revisão, e quem espera há mais tempo fica no topo:
+
+```
+ 4d checkout#482 Corrige arredondamento do frete grátis
+30h api-pedidos#1290 Adiciona retry no webhook de pagamento
+ 2h app-mobile#77 Nova tela de rastreio
+```
+
+| Cor | Esperando há |
+|---|---|
+| cinza | menos de 1 dia |
+| amarelo | de 1 a 3 dias |
+| vermelho | 3 dias ou mais |
+
+A data é a do último pedido de revisão feito **a você**. Se alguém pedir de
+novo depois de um ajuste, a contagem recomeça. Um push novo no PR não muda
+nada. Se o pedido veio por um time, o painel usa o último pedido de revisão do
+PR e, se nem isso existir, a última atualização.
+
+> Pedidos muito antigos (de PRs que ninguém fechou) também aparecem no topo e
+> entram na contagem. Para limpar, remova-se dos revisores no GitHub ou feche o
+> PR.
+
 ### Status dos seus PRs
 
 Cada PR em **Meus PRs abertos** começa com o estado do CI do último commit:
@@ -65,7 +91,8 @@ Rascunhos não entram no resumo e não mostram status.
 
 ### Ordem e rascunhos
 
-As listas vêm ordenadas pela última atualização (a mais recente no topo).
+**Meus PRs abertos** vêm ordenados pela última atualização (a mais recente no
+topo). **Revisões pendentes**, pelo tempo de espera (o mais antigo no topo).
 Rascunhos (draft) aparecem apagados, com `[draft]` antes do título. Cada caixa
 mostra até 6 PRs e depois "+N mais".
 
