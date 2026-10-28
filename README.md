@@ -150,8 +150,11 @@ ICS_URL=https://calendar.google.com/calendar/ical/.../private-.../basic.ics
 EMAIL=ana@empresa.com
 PR_INTERVAL=2m
 CAL_INTERVAL=5m
+REVIEW_MAX_AGE=7d    # só pedidos de revisão da última semana
 JIRA_URL=https://empresa.atlassian.net
 ```
+
+Não precisa recompilar nada: o painel lê o arquivo toda vez que abre.
 
 Qualquer chave também pode vir de uma variável de ambiente com o prefixo
 `PAINEL_`, que tem prioridade sobre o arquivo (ex.: `PAINEL_NAME=Ana painel`).

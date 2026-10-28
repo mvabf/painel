@@ -53,7 +53,7 @@ fragment Requested on PullRequest {
 }
 query {
   viewer { login }
-  direct: search(query: "is:pr is:open user-review-requested:@me", type: ISSUE, first: 50) {
+  direct: search(query: "is:pr is:open user-review-requested:@me sort:updated-desc", type: ISSUE, first: 50) {
     issueCount
     nodes { ...PR ...Requested }
   }

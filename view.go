@@ -48,12 +48,21 @@ func (m model) View() string {
 	}
 	cols, colWidth := gridLayout(m.width-4, n)
 
-	var teamNote string
+	toReview, reviewTotal := m.prs.ToReview, m.prs.ToReviewTotal
+	var reviewNotes []string
 	if m.prs.TeamReview > 0 {
-		teamNote = fmt.Sprintf("+%d pedidos aos seus times", m.prs.TeamReview)
+		reviewNotes = append(reviewNotes, fmt.Sprintf("+%d pedidos aos seus times", m.prs.TeamReview))
+	}
+	if m.cfg.ReviewMaxAge > 0 && toReview != nil {
+		var hidden int
+		toReview, hidden = recentReviews(toReview, m.cfg.ReviewMaxAge, m.now)
+		reviewTotal = len(toReview)
+		if hidden > 0 {
+			reviewNotes = append(reviewNotes, fmt.Sprintf("ocultos: %d com mais de %s", hidden, ageLabel(m.cfg.ReviewMaxAge)))
+		}
 	}
 	reviewLine := func(p pr) string { return reviewPRLine(p, m.now) }
-	review := m.viewPRBox("Revisões pendentes", teamNote, m.prs.ToReview, m.prs.ToReviewTotal, reviewLine, pink, colWidth)
+	review := m.viewPRBox("Revisões pendentes", strings.Join(reviewNotes, " · "), toReview, reviewTotal, reviewLine, pink, colWidth)
 	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, prLine, green, colWidth)
 	boxes := []string{review, mine}
 	if m.cfg.jiraEnabled() {
@@ -260,6 +269,39 @@ func reviewPRLine(p pr, now time.Time) string {
 		style = waitStyle
 	}
 	return style.Render(fmt.Sprintf("%3s", shortAge(waited))) + " " + dimStyle.Render(ref) + " " + p.Title
+}
+
+// recentReviews separa os pedidos feitos há no máximo maxAge.
+func recentReviews(prs []pr, maxAge time.Duration, now time.Time) (recent []pr, hidden int) {
+	recent = []pr{}
+	for _, p := range prs {
+		if now.Sub(p.RequestedAt) <= maxAge {
+			recent = append(recent, p)
+		} else {
+			hidden++
+		}
+	}
+	return recent, hidden
+}
+
+// ageLabel: "7 dias", "1 dia", "36h".
+func ageLabel(d time.Duration) string {
+	const day = 24 * time.Hour
+	switch {
+	case d == day:
+		return "1 dia"
+	case d%day == 0:
+		return fmt.Sprintf("%d dias", d/day)
+	}
+	// time.Duration escreve "36h0m0s"; tira só os zeros do fim.
+	s := d.String()
+	if strings.HasSuffix(s, "m0s") {
+		s = strings.TrimSuffix(s, "0s")
+	}
+	if strings.HasSuffix(s, "h0m") {
+		s = strings.TrimSuffix(s, "0m")
+	}
+	return s
 }
 
 // shortAge: "45m", "5h", "3d".

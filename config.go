@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +17,8 @@ type config struct {
 	Agenda      string // "google", "ics" ou "" (sem agenda)
 	PRInterval  time.Duration
 	CalInterval time.Duration
+	// ReviewMaxAge esconde pedidos de revisão mais antigos que isso (0 = todos).
+	ReviewMaxAge time.Duration
 
 	JiraURL      string // ex.: https://empresa.atlassian.net
 	JiraEmail    string
@@ -69,11 +72,12 @@ func loadConfig() config {
 	}
 
 	cfg := config{
-		Name:        get("NAME"),
-		ICSURL:      get("ICS_URL"),
-		Email:       get("EMAIL"),
-		PRInterval:  parseDuration(get("PR_INTERVAL"), 2*time.Minute),
-		CalInterval: parseDuration(get("CAL_INTERVAL"), 5*time.Minute),
+		Name:         get("NAME"),
+		ICSURL:       get("ICS_URL"),
+		Email:        get("EMAIL"),
+		PRInterval:   parseDuration(get("PR_INTERVAL"), 2*time.Minute),
+		CalInterval:  parseDuration(get("CAL_INTERVAL"), 5*time.Minute),
+		ReviewMaxAge: parseAge(get("REVIEW_MAX_AGE")),
 
 		JiraURL:      strings.TrimRight(first(get("JIRA_URL"), std("JIRA_BASE_URL")), "/"),
 		JiraEmail:    first(get("JIRA_EMAIL"), std("JIRA_EMAIL")),
@@ -160,6 +164,20 @@ func parseDuration(s string, def time.Duration) time.Duration {
 		return d
 	}
 	return def
+}
+
+// parseAge aceita dias ("7d") ou uma duração do Go ("36h"). Vazio ou
+// inválido é 0, que significa sem limite.
+func parseAge(s string) time.Duration {
+	s = strings.TrimSpace(s)
+	if days, ok := strings.CutSuffix(s, "d"); ok {
+		var n int
+		if _, err := fmt.Sscanf(days, "%d", &n); err == nil && n > 0 && fmt.Sprint(n) == days {
+			return time.Duration(n) * 24 * time.Hour
+		}
+		return 0
+	}
+	return parseDuration(s, 0)
 }
 
 func gitFirstName() string {

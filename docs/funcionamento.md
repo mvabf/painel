@@ -54,9 +54,21 @@ novo depois de um ajuste, a contagem recomeça. Um push novo no PR não muda
 nada. Se o pedido veio por um time, o painel usa o último pedido de revisão do
 PR e, se nem isso existir, a última atualização.
 
-> Pedidos muito antigos (de PRs que ninguém fechou) também aparecem no topo e
-> entram na contagem. Para limpar, remova-se dos revisores no GitHub ou feche o
-> PR.
+Pedidos muito antigos (de PRs que ninguém fechou) também aparecem no topo e
+entram na contagem. Há duas saídas:
+
+- **Limpar na origem:** remova-se dos revisores no GitHub ou feche o PR.
+- **Esconder no painel:** com `REVIEW_MAX_AGE=7d` no config, só aparecem os
+  pedidos dos últimos 7 dias. A contagem passa a considerar só esses, e uma
+  linha avisa o resto:
+
+  ```
+  5 Revisões pendentes
+  +52 pedidos aos seus times · ocultos: 9 com mais de 7 dias
+  ```
+
+  O filtro olha os 50 pedidos atualizados mais recentemente, que é o que a
+  consulta traz.
 
 ### Status dos seus PRs
 

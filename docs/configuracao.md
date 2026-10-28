@@ -41,6 +41,7 @@ PAINEL_AGENDA=ics PAINEL_ICS_URL=~/Downloads/teste.ics painel
 | `AGENDA` | automático | Força a fonte da agenda: `google` ou `ics`. Sem essa chave, usa o Google se houver login e o iCal se houver `ICS_URL` |
 | `PR_INTERVAL` | `2m` | De quanto em quanto tempo buscar os PRs |
 | `CAL_INTERVAL` | `5m` | De quanto em quanto tempo buscar a agenda |
+| `REVIEW_MAX_AGE` | sem limite | Mostra só os pedidos de revisão feitos há no máximo esse tempo, ex.: `7d`, `14d`, `36h`. Os mais antigos somem da lista e da contagem, e uma linha avisa quantos ficaram de fora |
 | `ENV_FILE` | (vazio) | Outro arquivo `CHAVE=valor` de onde ler os nomes padrão do Jira (veja abaixo). Aceita `~/` |
 | `JIRA_URL` | `JIRA_BASE_URL` | Endereço do seu Jira Cloud, ex.: `https://empresa.atlassian.net` |
 | `JIRA_EMAIL` | `JIRA_EMAIL` | E-mail da sua conta Atlassian |
@@ -53,7 +54,11 @@ alternativa (veja [Jira](#jira)). A caixa do Jira só aparece com URL, e-mail e
 token preenchidos.
 
 Os intervalos usam o formato de duração do Go: `30s`, `90s`, `2m`, `1h`,
-`1m30s`. Um valor inválido ou zero volta para o padrão.
+`1m30s`. Um valor inválido ou zero volta para o padrão. `REVIEW_MAX_AGE` também
+aceita dias, com `d` (`7d`), e vazio, zero ou inválido significa sem limite.
+
+Nenhuma configuração exige recompilar: o painel lê o arquivo toda vez que abre.
+Mudou algo? Feche com `q` e abra de novo.
 
 > Evite `PR_INTERVAL` abaixo de `30s`. Cada ciclo é uma consulta à API do
 > GitHub, e o seu login tem um limite por hora compartilhado com outras

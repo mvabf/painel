@@ -150,3 +150,52 @@ func TestReviewPRLine(t *testing.T) {
 		}
 	}
 }
+
+func TestParseAge(t *testing.T) {
+	cases := map[string]time.Duration{
+		"7d": 7 * 24 * time.Hour, "1d": 24 * time.Hour, "36h": 36 * time.Hour, "90m": 90 * time.Minute,
+		"": 0, "0d": 0, "-3d": 0, "sete": 0, "7 d": 0, "7.5d": 0,
+	}
+	for in, want := range cases {
+		if got := parseAge(in); got != want {
+			t.Errorf("parseAge(%q) = %v, quero %v", in, got, want)
+		}
+	}
+}
+
+func TestAgeLabel(t *testing.T) {
+	cases := map[time.Duration]string{24 * time.Hour: "1 dia", 7 * 24 * time.Hour: "7 dias", 36 * time.Hour: "36h", 90 * time.Minute: "1h30m", 45 * time.Minute: "45m", 30 * time.Second: "30s"}
+	for d, want := range cases {
+		if got := ageLabel(d); got != want {
+			t.Errorf("ageLabel(%v) = %q, quero %q", d, got, want)
+		}
+	}
+}
+
+func TestReviewMaxAge(t *testing.T) {
+	m := fakeModel(160)
+	m.prs.ToReview = []pr{
+		{Repo: "velho", Number: 1, Title: "Antigo", RequestedAt: m.now.Add(-30 * 24 * time.Hour)},
+		{Repo: "medio", Number: 2, Title: "Oito dias", RequestedAt: m.now.Add(-8 * 24 * time.Hour)},
+		{Repo: "novo", Number: 3, Title: "Ontem", RequestedAt: m.now.Add(-20 * time.Hour)},
+	}
+	m.prs.ToReviewTotal = 3
+
+	out := ansi.Strip(m.View())
+	if !strings.Contains(out, "3 Revisões pendentes") || !strings.Contains(out, "velho#1") {
+		t.Fatalf("sem limite deveria mostrar tudo:\n%s", out)
+	}
+
+	m.cfg.ReviewMaxAge = 7 * 24 * time.Hour
+	out = ansi.Strip(m.View())
+	for _, want := range []string{"1 Revisões pendentes", "novo#3", "ocultos: 2 com mais de 7 dias"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("faltou %q:\n%s", want, out)
+		}
+	}
+	for _, bad := range []string{"velho#1", "medio#2"} {
+		if strings.Contains(out, bad) {
+			t.Errorf("%q deveria estar oculto", bad)
+		}
+	}
+}
