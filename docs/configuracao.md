@@ -45,9 +45,9 @@ PAINEL_AGENDA=ics PAINEL_ICS_URL=~/Downloads/teste.ics painel
 Os intervalos usam o formato de duração do Go: `30s`, `90s`, `2m`, `1h`,
 `1m30s`. Um valor inválido ou zero volta para o padrão.
 
-> Evite `PR_INTERVAL` abaixo de `1m`. Cada ciclo faz 3 buscas na API de busca
-> do GitHub, que permite 30 por minuto. Veja
-> [funcionamento.md](funcionamento.md#limites).
+> Evite `PR_INTERVAL` abaixo de `30s`. Cada ciclo é uma consulta à API do
+> GitHub, e o seu login tem um limite por hora compartilhado com outras
+> ferramentas. Veja [funcionamento.md](funcionamento.md#limites).
 
 ## Outros arquivos da pasta
 

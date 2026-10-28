@@ -17,7 +17,7 @@ fictícios.
 | **Expediente** | Barra com quanto do dia útil (9h–18h) já passou. No fim de semana, avisa que é fim de semana |
 | **Agora / próxima** | A reunião em andamento ou a próxima, com quanto tempo falta ("próxima: Daily em 12 min") |
 | **Revisões pendentes** | PRs abertos em que pediram revisão **diretamente a você**, e abaixo quantos pedidos foram feitos só aos seus times |
-| **Meus PRs abertos** | PRs abertos de sua autoria, os atualizados mais recentemente primeiro. Rascunhos (draft) aparecem apagados |
+| **Meus PRs abertos** | PRs abertos de sua autoria com o estado do CI (✓ ✗ ●), marcadores de **aprovado**, **mudanças** pedidas e **conflito**, e um resumo do que pede atenção. Rascunhos (draft) aparecem apagados |
 | **Agenda de hoje** | Eventos do dia. Os que já passaram ficam riscados, o atual fica destacado e os de dia inteiro vêm primeiro |
 
 Os números se atualizam sozinhos: PRs a cada 2 minutos e agenda a cada 5. O

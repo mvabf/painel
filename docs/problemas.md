@@ -41,12 +41,12 @@ O GitHub CLI não está instalado. Veja [cli.github.com](https://cli.github.com/
 **Os números ficam em `…` por muito tempo**
 A primeira busca ainda não terminou. As três buscas levam poucos segundos, mas
 uma rede lenta ou uma VPN podem demorar mais. Rode
-`gh search prs author:@me --state=open` direto no terminal para ver quanto demora.
+`gh search prs --author=@me --state=open` direto no terminal para ver quanto demora.
 
 **`gh: API rate limit exceeded`**
-Você está fazendo buscas demais na API do GitHub (o limite é 30 por minuto,
-contando outras ferramentas que usam o seu login). Aumente `PR_INTERVAL` ou
-espere um minuto.
+O seu login passou do limite da API do GitHub, que é compartilhado com outras
+ferramentas (scripts, CI local, extensões). Aumente `PR_INTERVAL` ou espere o
+limite renovar. `gh api rate_limit` mostra quanto falta.
 
 **O número não bate com o que vejo no GitHub**
 O número principal conta só os pedidos de revisão feitos **a você pelo nome**.

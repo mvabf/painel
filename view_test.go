@@ -4,14 +4,14 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 func fakeModel(width int) model {
 	now := time.Date(2026, 10, 28, 14, 7, 30, 0, time.Local)
 	p := func(repo string, n int, title string) pr {
-		x := pr{Number: n, Title: title, UpdatedAt: now}
-		x.Repository.Name = repo
-		return x
+		return pr{Number: n, Title: title, UpdatedAt: now, Repo: repo}
 	}
 	ev := func(h, min, dur int, title string) event {
 		s := time.Date(2026, 10, 28, h, min, 0, 0, time.Local)
@@ -67,5 +67,42 @@ func TestHumanDuration(t *testing.T) {
 		if got := humanDuration(d); got != want {
 			t.Errorf("humanDuration(%v) = %q, quero %q", d, got, want)
 		}
+	}
+}
+
+func TestPRLine(t *testing.T) {
+	base := pr{Repo: "api", Number: 7, Title: "Título"}
+	cases := []struct {
+		name string
+		p    pr
+		want []string
+	}{
+		{"CI ok e aprovado", pr{Repo: "api", Number: 7, Title: "Título", CI: "SUCCESS", Review: "APPROVED"}, []string{"✓ api#7 aprovado Título"}},
+		{"CI falhando, mudanças e conflito", pr{Repo: "api", Number: 7, Title: "Título", CI: "FAILURE", Review: "CHANGES_REQUESTED", Conflict: true}, []string{"✗ api#7 conflito mudanças Título"}},
+		{"CI rodando", pr{Repo: "api", Number: 7, Title: "Título", CI: "PENDING"}, []string{"● api#7 Título"}},
+		{"sem checks", base, []string{"· api#7 Título"}},
+		{"draft ignora status", pr{Repo: "api", Number: 7, Title: "Título", IsDraft: true, CI: "FAILURE"}, []string{"· api#7 [draft] Título"}},
+	}
+	for _, c := range cases {
+		got := ansi.Strip(prLine(c.p))
+		if got != c.want[0] {
+			t.Errorf("%s: got %q, want %q", c.name, got, c.want[0])
+		}
+	}
+}
+
+func TestMineSummary(t *testing.T) {
+	prs := []pr{
+		{CI: "FAILURE", Review: "CHANGES_REQUESTED"},
+		{CI: "SUCCESS", Review: "APPROVED"},
+		{CI: "SUCCESS", Review: "APPROVED", Conflict: true},
+		{CI: "FAILURE", IsDraft: true}, // draft não conta
+	}
+	want := "1 com CI falhando · 1 com mudanças pedidas · 1 com conflito · 2 aprovados"
+	if got := mineSummary(prs); got != want {
+		t.Errorf("got %q\nwant %q", got, want)
+	}
+	if got := mineSummary([]pr{{CI: "SUCCESS"}}); got != "" {
+		t.Errorf("sem nada a destacar deveria ser vazio, veio %q", got)
 	}
 }

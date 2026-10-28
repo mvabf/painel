@@ -53,8 +53,8 @@ func (m model) View() string {
 	if m.prs.TeamReview > 0 {
 		teamNote = fmt.Sprintf("+%d pedidos aos seus times", m.prs.TeamReview)
 	}
-	review := m.viewPRBox("Revisões pendentes", teamNote, m.prs.ToReview, pink, colWidth)
-	mine := m.viewPRBox("Meus PRs abertos", "", m.prs.Mine, green, colWidth)
+	review := m.viewPRBox("Revisões pendentes", teamNote, m.prs.ToReview, m.prs.ToReviewTotal, pink, colWidth)
+	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, green, colWidth)
 	agenda := m.viewAgendaBox(colWidth)
 
 	var body string
@@ -137,14 +137,14 @@ func (m model) viewNextEvent() string {
 }
 
 // viewPRBox e viewAgendaBox devolvem só o conteúdo; a borda é aplicada em View.
-func (m model) viewPRBox(title, note string, prs []pr, color lipgloss.AdaptiveColor, width int) string {
+func (m model) viewPRBox(title, note string, prs []pr, total int, color lipgloss.AdaptiveColor, width int) string {
 	inner := width - 2 - 2 // borda + padding
 	titleStyle := lipgloss.NewStyle().Foreground(color).Bold(true)
 
 	var lines []string
 	count := "…"
 	if m.prs.ToReview != nil || m.prs.Mine != nil { // já houve uma busca com sucesso
-		count = fmt.Sprint(len(prs))
+		count = fmt.Sprint(max(total, len(prs)))
 	}
 	lines = append(lines, titleStyle.Render(count)+" "+title+m.spinner(m.prsLoading))
 	if note != "" {
@@ -161,18 +161,88 @@ func (m model) viewPRBox(title, note string, prs []pr, color lipgloss.AdaptiveCo
 
 	for i, p := range prs {
 		if i == maxListItems {
-			lines = append(lines, dimStyle.Render(fmt.Sprintf("+%d mais", len(prs)-maxListItems)))
+			lines = append(lines, dimStyle.Render(fmt.Sprintf("+%d mais", max(total, len(prs))-maxListItems)))
 			break
 		}
-		ref := fmt.Sprintf("%s#%d", p.Repository.Name, p.Number)
-		text := dimStyle.Render(ref) + " " + p.Title
-		if p.IsDraft {
-			text = dimStyle.Render(ref + " [draft] " + p.Title)
-		}
-		lines = append(lines, ansi.Truncate(text, inner, "…"))
+		lines = append(lines, ansi.Truncate(prLine(p), inner, "…"))
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+var (
+	okStyle   = lipgloss.NewStyle().Foreground(green)
+	failStyle = lipgloss.NewStyle().Foreground(errColr)
+	waitStyle = lipgloss.NewStyle().Foreground(yellow)
+)
+
+// prLine: ícone do CI, repo#número, marcadores de revisão/conflito e título.
+func prLine(p pr) string {
+	ref := fmt.Sprintf("%s#%d", p.Repo, p.Number)
+	if p.IsDraft {
+		return dimStyle.Render("· " + ref + " [draft] " + p.Title)
+	}
+
+	icon := dimStyle.Render("·")
+	switch p.CI {
+	case "SUCCESS":
+		icon = okStyle.Render("✓")
+	case "FAILURE", "ERROR":
+		icon = failStyle.Render("✗")
+	case "PENDING", "EXPECTED":
+		icon = waitStyle.Render("●")
+	}
+
+	var tags []string
+	if p.Conflict {
+		tags = append(tags, failStyle.Render("conflito"))
+	}
+	switch p.Review {
+	case "CHANGES_REQUESTED":
+		tags = append(tags, failStyle.Render("mudanças"))
+	case "APPROVED":
+		tags = append(tags, okStyle.Render("aprovado"))
+	}
+
+	parts := append([]string{icon, dimStyle.Render(ref)}, tags...)
+	return strings.Join(append(parts, p.Title), " ")
+}
+
+// mineSummary resume o que pede ação nos meus PRs, mesmo os que não cabem na lista.
+func mineSummary(prs []pr) string {
+	var failing, changes, conflicts, approved int
+	for _, p := range prs {
+		if p.IsDraft {
+			continue
+		}
+		if p.CI == "FAILURE" || p.CI == "ERROR" {
+			failing++
+		}
+		if p.Conflict {
+			conflicts++
+		}
+		switch p.Review {
+		case "CHANGES_REQUESTED":
+			changes++
+		case "APPROVED":
+			approved++
+		}
+	}
+
+	var parts []string
+	add := func(n int, one, many string) {
+		switch {
+		case n == 1:
+			parts = append(parts, "1 "+one)
+		case n > 1:
+			parts = append(parts, fmt.Sprintf("%d %s", n, many))
+		}
+	}
+	add(failing, "com CI falhando", "com CI falhando")
+	add(changes, "com mudanças pedidas", "com mudanças pedidas")
+	add(conflicts, "com conflito", "com conflito")
+	add(approved, "aprovado", "aprovados")
+	return strings.Join(parts, " · ")
 }
 
 func (m model) viewAgendaBox(width int) string {

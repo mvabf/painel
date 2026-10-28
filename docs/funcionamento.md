@@ -3,7 +3,8 @@
 ## De onde vêm os PRs
 
 O painel não guarda token do GitHub. Ele chama o **GitHub CLI** (`gh`), que já
-está autenticado na sua máquina, e roda três buscas em paralelo:
+está autenticado na sua máquina, e faz **uma única consulta** à API GraphQL do
+GitHub com três buscas (veja `prsQuery` em `prs.go`):
 
 | Busca | Equivalente no site | Vira |
 |---|---|---|
@@ -11,7 +12,9 @@ está autenticado na sua máquina, e roda três buscas em paralelo:
 | `review-requested:@me` | O mesmo, **incluindo** pedidos aos seus times | Usado para calcular a linha "+N pedidos aos seus times" |
 | `author:@me` | Seus PRs | **Meus PRs abertos** |
 
-Todas filtram só PRs abertos, em qualquer repositório que você consiga ver.
+Todas filtram só PRs abertos, em qualquer repositório que você consiga ver. Os
+totais vêm do GitHub e são exatos, mesmo quando a lista é maior do que cabe na
+tela.
 
 ### Por que separar "para você" de "para os times"
 
@@ -28,6 +31,37 @@ times fica como informação secundária:
 
 O "+52" é a diferença entre as duas buscas. Se você já revisou um PR, o GitHub
 tira o pedido e ele sai das duas contagens.
+
+### Status dos seus PRs
+
+Cada PR em **Meus PRs abertos** começa com o estado do CI do último commit:
+
+| Ícone | Significado |
+|---|---|
+| ✓ verde | Todos os checks passaram |
+| ✗ vermelho | Algum check falhou |
+| ● amarelo | Checks rodando ou esperando |
+| · cinza | O repositório não tem checks |
+
+Depois do `repo#número`, podem aparecer marcadores:
+
+- **conflito** (vermelho): o PR tem conflito com a branch de destino.
+- **mudanças** (vermelho): alguém pediu mudanças na revisão.
+- **aprovado** (verde): a revisão exigida foi aprovada.
+
+Abaixo do título da caixa vem um resumo do que pede atenção, contando também os
+PRs que não couberam na lista:
+
+```
+8 Meus PRs abertos
+1 com CI falhando · 4 aprovados
+```
+
+Rascunhos não entram no resumo e não mostram status.
+
+> O GitHub calcula o "tem conflito" sob demanda. Logo depois de um push, o
+> estado pode estar como desconhecido, e o marcador só aparece em um ciclo
+> seguinte.
 
 ### Ordem e rascunhos
 
@@ -88,8 +122,9 @@ lugar a "fim de semana 🎉".
 
 ## Limites
 
-- **Busca do GitHub:** a API permite 30 buscas por minuto. Cada ciclo do painel
-  faz 3. Com o padrão de 2 minutos, isso dá 1,5 por minuto.
-- **Até 100 PRs por busca.** Se você tiver mais de 100 pedidos de revisão
-  somando os times, o "+N" fica subestimado.
+- **API do GitHub:** cada ciclo custa 2 pontos do limite da API GraphQL, que é
+  de 5.000 pontos por hora. Com o padrão de 2 minutos, isso dá 60 pontos por hora.
+- **Até 50 PRs por lista.** Os números (total, "+N" dos times e o resumo) são
+  exatos, mas o resumo dos seus PRs considera só os 50 atualizados mais
+  recentemente.
 - **Agenda:** até 100 eventos por dia na API do Google. Na tela, até 8.

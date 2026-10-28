@@ -37,6 +37,11 @@ func TestDemoFrames(t *testing.T) {
 	}
 }
 
+func withStatus(p pr, ci, review string, conflict bool) pr {
+	p.CI, p.Review, p.Conflict = ci, review, conflict
+	return p
+}
+
 func demoModel(now time.Time, loaded bool) model {
 	m := model{
 		cfg:           config{Name: "Ana", Agenda: "google"},
@@ -52,9 +57,7 @@ func demoModel(now time.Time, loaded bool) model {
 
 	at := func(h, min int) time.Time { return time.Date(2026, 10, 28, h, min, 0, 0, time.Local) }
 	p := func(repo string, n int, title string, draft bool) pr {
-		x := pr{Number: n, Title: title, IsDraft: draft}
-		x.Repository.Name = repo
-		return x
+		return pr{Number: n, Title: title, IsDraft: draft, Repo: repo, CI: "SUCCESS"}
 	}
 	ev := func(h, min, dur int, title string) event {
 		return event{Title: title, Start: at(h, min), End: at(h, min).Add(time.Duration(dur) * time.Minute)}
@@ -69,7 +72,9 @@ func demoModel(now time.Time, loaded bool) model {
 		},
 		TeamReview: 12,
 		Mine: []pr{
-			p("api-pedidos", 1287, "Cache na cotação de transportadoras", false),
+			withStatus(p("api-pedidos", 1287, "Cache na cotação de transportadoras", false), "SUCCESS", "APPROVED", false),
+			withStatus(p("checkout", 479, "Remove cupom expirado do carrinho", false), "FAILURE", "CHANGES_REQUESTED", false),
+			withStatus(p("api-pedidos", 1281, "Migra fila de notas fiscais", false), "PENDING", "", true),
 			p("design-system", 341, "Tokens de cor para o tema escuro", true),
 		},
 	}
