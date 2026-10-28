@@ -9,7 +9,7 @@ estado em texto.
 ## Mapa dos arquivos
 
 ```
-main.go         entrada: subcomandos (auth, help) e início do programa
+main.go         entrada: subcomandos (auth, version, help) e início do programa
 config.go       leitura de ~/.config/painel/config e das variáveis PAINEL_*
 model.go        estado, mensagens e Update: relógio, ciclos de busca, teclas
 view.go         View: layout, caixas, cores e textos
@@ -19,6 +19,9 @@ agenda.go       agenda via iCal (URL ou arquivo) e ordenação dos eventos
 google.go       login OAuth (`painel auth`) e agenda via Google Calendar API
 view_test.go    testes de renderização com dados falsos
 agenda_test.go  testes do iCal: recorrências, remarcações, recusados, repetidos
+.goreleaser.yaml          como os executáveis de release são gerados
+.github/workflows/ci.yml  testes e compilação em cada push e PR
+.github/workflows/release.yml  publica a release quando sobe uma tag v*
 ```
 
 ## Fluxo

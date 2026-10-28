@@ -45,22 +45,52 @@ Detalhes de como cada número é calculado estão em
 
 ## Começo rápido
 
-Você precisa de:
+A única dependência é o **GitHub CLI (`gh`)** autenticado
+([instalação](https://cli.github.com/)). Confira com `gh auth status`. Se não
+estiver logado, rode `gh auth login`.
 
-- **Go 1.24 ou mais novo** ([instalação](https://go.dev/doc/install))
-- **GitHub CLI (`gh`)** autenticado ([instalação](https://cli.github.com/)).
-  Confira com `gh auth status`. Se não estiver logado, rode `gh auth login`.
+### Baixar pronto (recomendado)
 
-Depois:
+Não precisa de Go. Escolha o arquivo do seu sistema:
+
+| Sistema | Arquivo |
+|---|---|
+| Linux (Intel/AMD) | `painel_linux_amd64.tar.gz` |
+| Linux (ARM) | `painel_linux_arm64.tar.gz` |
+| macOS com Apple Silicon (M1 em diante) | `painel_darwin_arm64.tar.gz` |
+| macOS com Intel | `painel_darwin_amd64.tar.gz` |
+| Windows | `painel_windows_amd64.zip` |
+
+No Linux e no macOS (troque o nome do arquivo pelo seu):
+
+```sh
+gh release download --repo mvabf/painel --pattern 'painel_linux_amd64.tar.gz' --dir /tmp/painel --clobber
+mkdir -p ~/.local/bin
+tar xzf /tmp/painel/painel_linux_amd64.tar.gz -C ~/.local/bin painel
+painel version
+```
+
+No Windows, baixe o `.zip` da [última versão](https://github.com/mvabf/painel/releases/latest),
+extraia o `painel.exe` para uma pasta que esteja no `PATH` e rode pelo Windows
+Terminal.
+
+Para **atualizar**, repita os mesmos comandos: eles sempre pegam a versão mais
+recente.
+
+### Compilar do código
+
+Precisa do **Go 1.24 ou mais novo** ([instalação](https://go.dev/doc/install)):
 
 ```sh
 git clone git@github.com:mvabf/painel.git
 cd painel
 make install        # instala em ~/.local/bin/painel
-painel
 ```
 
-Se `~/.local/bin` não estiver no seu `PATH`, adicione ao seu `~/.zshrc` ou `~/.bashrc`:
+### `PATH`
+
+Se aparecer `painel: command not found`, adicione `~/.local/bin` ao `PATH` no
+seu `~/.zshrc` ou `~/.bashrc` e abra um terminal novo:
 
 ```sh
 export PATH="$HOME/.local/bin:$PATH"
@@ -96,6 +126,7 @@ O passo a passo de cada um, com os erros comuns, está em
 ```sh
 painel          # abre o dashboard
 painel auth     # login no Google Calendar (uma vez)
+painel version  # versão instalada
 painel help     # ajuda
 ```
 
@@ -151,6 +182,7 @@ A lista completa está em [docs/problemas.md](docs/problemas.md).
 | [docs/seguranca.md](docs/seguranca.md) | O que é guardado e quais acessos o painel tem |
 | [docs/problemas.md](docs/problemas.md) | Erros e como resolver |
 | [docs/arquitetura.md](docs/arquitetura.md) | Como o código é organizado, para quem quer contribuir |
+| [docs/release.md](docs/release.md) | Como publicar uma versão nova |
 
 ## Contribuindo
 
@@ -160,6 +192,9 @@ Ideias e PRs são bem-vindos. Para rodar a partir do código:
 make build && ./painel   # compila e roda
 make test                # testes
 ```
+
+O CI roda formatação, `go vet`, testes e a compilação para todos os sistemas
+em cada push e PR.
 
 Antes de mexer, leia [docs/arquitetura.md](docs/arquitetura.md). Ele explica o
 modelo do Bubble Tea, onde fica cada coisa e como adicionar uma caixa nova.

@@ -7,12 +7,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// version é preenchida no build de release (-X main.version=...).
+var version = "dev"
+
 const usage = `painel: dashboard pessoal de terminal (PRs, agenda e relógio)
 
 uso:
   painel          abre o dashboard
   painel auth     faz login no Google Calendar (veja docs/agenda.md)
   painel help     mostra esta ajuda
+  painel version  mostra a versão
 
 configuração: ~/.config/painel/config ou variáveis PAINEL_* (veja docs/configuracao.md)
 `
@@ -25,6 +29,9 @@ func main() {
 				fmt.Fprintln(os.Stderr, "painel auth:", err)
 				os.Exit(1)
 			}
+			return
+		case "version", "-v", "--version":
+			fmt.Println("painel", version)
 			return
 		case "help", "-h", "--help":
 			fmt.Print(usage)

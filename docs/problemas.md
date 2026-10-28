@@ -3,7 +3,7 @@
 ## Instalação
 
 **`painel: command not found`**
-O `make install` coloca o binário em `~/.local/bin`, que pode não estar no seu
+O README instala o binário em `~/.local/bin`, que pode não estar no seu
 `PATH`. Adicione ao `~/.zshrc` ou `~/.bashrc`:
 
 ```sh
@@ -11,6 +11,15 @@ export PATH="$HOME/.local/bin:$PATH"
 ```
 
 Depois abra um terminal novo.
+
+**`gh: release not found` ou `no assets match the file pattern`**
+Confira o nome do arquivo na tabela do README. Se o repositório for privado, a
+sua conta do `gh` precisa ter acesso a ele.
+
+**macOS: "não é possível abrir porque o desenvolvedor não pode ser verificado"**
+Acontece quando o arquivo foi baixado pelo navegador. Libere com
+`xattr -d com.apple.quarantine ~/.local/bin/painel`. Baixando pelo `gh`, como
+no README, isso não acontece.
 
 **`go: command not found` ou erro de versão no `make`**
 O projeto precisa do Go 1.24 ou mais novo. Confira com `go version` e instale
