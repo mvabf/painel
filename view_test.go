@@ -18,13 +18,13 @@ func fakeModel(width int) model {
 		return event{Title: title, Start: s, End: s.Add(time.Duration(dur) * time.Minute)}
 	}
 	return model{
-		cfg:    config{Name: "Marcus", Agenda: "ics"},
+		cfg:    config{Name: "Ana", Agenda: "ics"},
 		now:    now,
 		width:  width,
 		height: 40,
 		prs: prsResult{
 			At:         now,
-			ToReview:   []pr{p("tray-native", 4052, "Corrige retry do webhook"), p("melhor-integrador-app", 294, "Nova tela de onboarding")},
+			ToReview:   []pr{p("web-app", 4052, "Corrige retry do webhook"), p("app-mobile", 294, "Nova tela de onboarding")},
 			TeamReview: 52,
 			Mine:       []pr{},
 		},
@@ -40,7 +40,7 @@ func fakeModel(width int) model {
 func TestViewRenders(t *testing.T) {
 	for _, w := range []int{160, 80} {
 		out := fakeModel(w).View()
-		for _, want := range []string{"Boa tarde, Marcus", "quarta-feira, 28 de outubro", "Revisões pendentes", "tray-native#4052", "nada aqui", "+52 pedidos aos seus times", "Refinamento", "agora: "} {
+		for _, want := range []string{"Boa tarde, Ana", "quarta-feira, 28 de outubro", "Revisões pendentes", "web-app#4052", "nada aqui", "+52 pedidos aos seus times", "Refinamento", "agora: "} {
 			if !strings.Contains(out, want) {
 				t.Errorf("largura %d: faltou %q na tela:\n%s", w, want, out)
 			}
