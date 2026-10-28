@@ -215,3 +215,8 @@ modelo do Bubble Tea, onde fica cada coisa e como adicionar uma caixa nova.
   [Lip Gloss](https://github.com/charmbracelet/lipgloss) para a interface
 - [gocal](https://github.com/apognu/gocal) para ler calendários iCal
 - [GitHub CLI](https://cli.github.com/) para buscar os PRs
+
+## Licença
+
+[MIT](LICENSE): use, modifique e distribua à vontade, mantendo o aviso de
+copyright.
