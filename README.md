@@ -32,6 +32,7 @@ NAME=Marcus
 
 # Agenda: no Google Calendar, Configurações > seu calendário >
 # "Endereço secreto no formato iCal". Trate como senha.
+# Também aceita o caminho de um .ics local, mas uma exportação não atualiza sozinha.
 ICS_URL=https://calendar.google.com/calendar/ical/.../basic.ics
 
 # Meu e-mail no calendário, para esconder reuniões que recusei

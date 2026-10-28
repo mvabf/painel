@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -35,22 +38,18 @@ func fetchAgenda(url, email string) agendaResult {
 		return res
 	}
 
-	resp, err := httpClient.Get(url)
+	body, err := openICS(url)
 	if err != nil {
 		res.Err = fmt.Errorf("agenda: %w", err)
 		return res
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		res.Err = fmt.Errorf("agenda: HTTP %d", resp.StatusCode)
-		return res
-	}
+	defer body.Close()
 
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 	end := start.AddDate(0, 0, 1)
 
-	c := gocal.NewParser(resp.Body)
+	c := gocal.NewParser(body)
 	c.Start, c.End = &start, &end
 	c.AllDayEventsTZ = time.Local
 	c.Strict.Mode = gocal.StrictModeFailEvent
@@ -86,6 +85,29 @@ func fetchAgenda(url, email string) agendaResult {
 		return a.Start.Before(b.Start)
 	})
 	return res
+}
+
+// openICS aceita uma URL http(s) ou o caminho de um arquivo .ics local
+// (útil para testar com uma exportação do calendário).
+func openICS(src string) (io.ReadCloser, error) {
+	if !strings.HasPrefix(src, "http://") && !strings.HasPrefix(src, "https://") {
+		if rest, ok := strings.CutPrefix(src, "~/"); ok {
+			if home, err := os.UserHomeDir(); err == nil {
+				src = filepath.Join(home, rest)
+			}
+		}
+		return os.Open(src)
+	}
+
+	resp, err := httpClient.Get(src)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+	return resp.Body, nil
 }
 
 // declined esconde reuniões que eu recusei, achando meu e-mail entre os convidados.
