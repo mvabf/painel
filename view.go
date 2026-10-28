@@ -186,7 +186,11 @@ func (m model) viewAgendaBox(width int) string {
 		}, "\n")
 	}
 
-	lines := []string{titleStyle.Render(fmt.Sprint(len(m.agenda.Events))) + " Agenda de hoje" + m.spinner(m.agendaLoading), ""}
+	count := "…"
+	if !m.agenda.At.IsZero() { // já houve uma busca
+		count = fmt.Sprint(len(m.agenda.Events))
+	}
+	lines := []string{titleStyle.Render(count) + " Agenda de hoje" + m.spinner(m.agendaLoading), ""}
 	if m.agenda.Err != nil {
 		lines = append(lines, errStyle.Render(ansi.Truncate(m.agenda.Err.Error(), inner, "…")))
 	}

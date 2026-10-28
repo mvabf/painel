@@ -4,26 +4,10 @@ Um dashboard pessoal para o terminal. Você digita `painel` e aparece uma tela
 que fica se atualizando sozinha com o que importa no seu dia de trabalho: PRs
 esperando a sua revisão, os seus PRs abertos, a agenda de hoje e a hora.
 
-```
-   █  █ █   ███ ███         Boa tarde, Ana
-  ██  █ █ ▪ █ █   █         quarta-feira, 28 de outubro
-   █  ███   █ █   █
-   █    █ ▪ █ █   █         expediente ━━━━━━━━━━━━━━━━━━━━  57%
-  ███   █   ███   █ :30     agora: Refinamento
+![O painel rodando: relógio, PRs para revisar, meus PRs e a agenda do dia](docs/demo.gif)
 
-  ╭──────────────────────────────────╮  ╭──────────────────────────────────╮  ╭──────────────────────────────────╮
-  │ 3 Revisões pendentes             │  │ 1 Meus PRs abertos               │  │ 4 Agenda de hoje                 │
-  │ +52 pedidos aos seus times       │  │                                  │  │                                  │
-  │                                  │  │ frete#77 Adiciona cache no cálc… │  │ dia todo Feriado                 │
-  │ web-app#4052 Corrige retry do w… │  │                                  │  │ 09:30    Daily                   │
-  │ mobile#294 Nova tela de onboard… │  │                                  │  │ 14:00    Refinamento             │
-  │ api-pedidos#812 Ajusta timeout … │  │                                  │  │ 16:00    1:1                     │
-  ╰──────────────────────────────────╯  ╰──────────────────────────────────╯  ╰──────────────────────────────────╯
-
-  PRs às 14:07 · agenda às 14:07 · r atualiza · p abre revisões · q sai
-```
-
-No terminal de verdade a tela é colorida. Ela se adapta a temas claros e escuros.
+As cores se adaptam a temas claros e escuros do terminal. Os dados acima são
+fictícios.
 
 ## O que aparece na tela
 

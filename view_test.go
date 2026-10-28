@@ -51,6 +51,16 @@ func TestViewRenders(t *testing.T) {
 	}
 }
 
+func TestViewLoading(t *testing.T) {
+	m := model{cfg: config{Agenda: "ics"}, now: time.Now(), width: 160, prsLoading: true, agendaLoading: true}
+	out := m.View()
+	for _, want := range []string{"… Revisões pendentes", "… Meus PRs abertos", "… Agenda de hoje"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("antes da primeira busca deveria mostrar %q:\n%s", want, out)
+		}
+	}
+}
+
 func TestHumanDuration(t *testing.T) {
 	cases := map[time.Duration]string{12 * time.Minute: "12 min", time.Hour: "1h", 90 * time.Minute: "1h30"}
 	for d, want := range cases {

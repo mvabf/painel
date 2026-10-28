@@ -19,6 +19,8 @@ agenda.go       agenda via iCal (URL ou arquivo) e ordenação dos eventos
 google.go       login OAuth (`painel auth`) e agenda via Google Calendar API
 view_test.go    testes de renderização com dados falsos
 agenda_test.go  testes do iCal: recorrências, remarcações, recusados, repetidos
+demo_test.go    gera os quadros do GIF do README (só com PAINEL_DEMO_DIR)
+scripts/demo_gif.py       desenha os quadros em docs/demo.gif
 .goreleaser.yaml          como os executáveis de release são gerados
 .github/workflows/ci.yml  testes e compilação em cada push e PR
 .github/workflows/release.yml  publica a release quando sobe uma tag v*
@@ -139,6 +141,20 @@ neles, e `fetchAgenda` lê um arquivo temporário.
 > RFC 5545) e só esconde uma ocorrência remarcada se a versão remarcada estiver
 > na janela pedida. `fetchAgenda` contorna o segundo ponto com `SkipBounds` e
 > faz o recorte do dia por conta própria. O comentário no código explica.
+
+## GIF do README
+
+O `docs/demo.gif` é gerado pelo próprio código, com dados fictícios. Assim ele
+acompanha a tela de verdade e nunca mostra dados de ninguém:
+
+```sh
+make demo-gif
+```
+
+`TestDemoFrames` renderiza a `View` segundo a segundo (14:59:53 a 15:00:06,
+para mostrar a virada da reunião) com cores truecolor e grava cada quadro em
+ANSI. `scripts/demo_gif.py` desenha esses quadros com Pillow e a fonte DejaVu
+Sans Mono. Os dados ficam em `demoModel`, em `demo_test.go`.
 
 ## Dependências
 
