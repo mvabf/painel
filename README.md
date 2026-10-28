@@ -20,6 +20,25 @@ atualizando com o que importa no meu dia.
 make install   # gera ~/.local/bin/painel
 ```
 
+## Agenda pelo Google Calendar
+
+Para contas Google Workspace em que o "Endereço secreto no formato iCal" foi
+desativado pelo admin. É preciso um client OAuth próprio (uma vez só):
+
+1. Em [console.cloud.google.com](https://console.cloud.google.com), crie um
+   projeto (ex.: `painel`).
+2. **APIs e serviços > Biblioteca**: ative a **Google Calendar API**.
+3. **APIs e serviços > Tela de permissão OAuth**: tipo **Interno** (se a conta
+   for Workspace) ou **Externo** com seu e-mail como usuário de teste.
+4. **APIs e serviços > Credenciais > Criar credenciais > ID do cliente OAuth**,
+   tipo **App para computador**. Baixe o JSON e salve em
+   `~/.config/painel/google-client.json`.
+5. Rode `painel auth` e faça login no navegador.
+
+O token fica em `~/.config/painel/google-token.json` (permissão 600) e só tem
+acesso de leitura aos eventos. Com ele presente, o painel usa o Google em vez
+do `ICS_URL` (force com `AGENDA=ics` ou `AGENDA=google`).
+
 ## Configuração
 
 Arquivo opcional `~/.config/painel/config` (`CHAVE=valor`). Qualquer chave pode
@@ -35,7 +54,7 @@ NAME=Marcus
 # Também aceita o caminho de um .ics local, mas uma exportação não atualiza sozinha.
 ICS_URL=https://calendar.google.com/calendar/ical/.../basic.ics
 
-# Meu e-mail no calendário, para esconder reuniões que recusei
+# Meu e-mail no calendário (só para iCal; o Google já sabe quem sou), para esconder reuniões que recusei
 EMAIL=voce@empresa.com
 
 # Intervalos de atualização (padrões: 2m e 5m)

@@ -77,14 +77,18 @@ func fetchAgenda(url, email string) agendaResult {
 		res.Events = append(res.Events, ev)
 	}
 
-	sort.Slice(res.Events, func(i, j int) bool {
-		a, b := res.Events[i], res.Events[j]
+	sortEvents(res.Events)
+	return res
+}
+
+func sortEvents(events []event) {
+	sort.SliceStable(events, func(i, j int) bool {
+		a, b := events[i], events[j]
 		if a.AllDay != b.AllDay {
 			return a.AllDay
 		}
 		return a.Start.Before(b.Start)
 	})
-	return res
 }
 
 // openICS aceita uma URL http(s) ou o caminho de um arquivo .ics local

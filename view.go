@@ -179,10 +179,10 @@ func (m model) viewAgendaBox(width int) string {
 	inner := width - 2 - 2
 	titleStyle := lipgloss.NewStyle().Foreground(yellow).Bold(true)
 
-	if m.cfg.ICSURL == "" {
+	if m.cfg.Agenda == "" {
 		return strings.Join([]string{
 			titleStyle.Render("Agenda de hoje"), "",
-			dimStyle.Render(ansi.Wrap("Configure PAINEL_ICS_URL ou ICS_URL em ~/.config/painel/config (veja o README).", inner, "")),
+			dimStyle.Render(ansi.Wrap("Rode `painel auth` para usar o Google Calendar ou configure ICS_URL (veja o README).", inner, "")),
 		}, "\n")
 	}
 

@@ -18,7 +18,7 @@ func fakeModel(width int) model {
 		return event{Title: title, Start: s, End: s.Add(time.Duration(dur) * time.Minute)}
 	}
 	return model{
-		cfg:    config{Name: "Marcus", ICSURL: "x"},
+		cfg:    config{Name: "Marcus", Agenda: "ics"},
 		now:    now,
 		width:  width,
 		height: 40,

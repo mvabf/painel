@@ -13,6 +13,7 @@ type config struct {
 	Name        string
 	ICSURL      string
 	Email       string
+	Agenda      string // "google", "ics" ou "" (sem agenda)
 	PRInterval  time.Duration
 	CalInterval time.Duration
 }
@@ -54,6 +55,17 @@ func loadConfig() config {
 	}
 	if cfg.Name == "" {
 		cfg.Name = gitFirstName()
+	}
+
+	// Sem AGENDA explícito: o Google ganha se já houve `painel auth`.
+	cfg.Agenda = get("AGENDA")
+	if cfg.Agenda == "" {
+		switch {
+		case hasGoogleToken():
+			cfg.Agenda = "google"
+		case cfg.ICSURL != "":
+			cfg.Agenda = "ics"
+		}
 	}
 	return cfg
 }

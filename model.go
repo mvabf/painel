@@ -30,7 +30,7 @@ type model struct {
 }
 
 func newModel(cfg config) model {
-	return model{cfg: cfg, now: time.Now(), prsLoading: true, agendaLoading: cfg.ICSURL != ""}
+	return model{cfg: cfg, now: time.Now(), prsLoading: true, agendaLoading: cfg.Agenda != ""}
 }
 
 func (m model) Init() tea.Cmd {
@@ -49,11 +49,14 @@ func (m model) loadPRs() tea.Cmd {
 }
 
 func (m model) loadAgenda() tea.Cmd {
-	if m.cfg.ICSURL == "" {
-		return nil
+	switch m.cfg.Agenda {
+	case "google":
+		return func() tea.Msg { return agendaMsg(fetchGoogleAgenda()) }
+	case "ics":
+		url, email := m.cfg.ICSURL, m.cfg.Email
+		return func() tea.Msg { return agendaMsg(fetchAgenda(url, email)) }
 	}
-	url, email := m.cfg.ICSURL, m.cfg.Email
-	return func() tea.Msg { return agendaMsg(fetchAgenda(url, email)) }
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -67,7 +70,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prsGen++
 			m.agendaGen++
 			m.prsLoading = true
-			m.agendaLoading = m.cfg.ICSURL != ""
+			m.agendaLoading = m.cfg.Agenda != ""
 			return m, tea.Batch(m.loadPRs(), m.loadAgenda())
 		case "p":
 			return m, openURL("https://github.com/pulls/review-requested")
