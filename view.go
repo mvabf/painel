@@ -14,6 +14,7 @@ var (
 	pink    = lipgloss.AdaptiveColor{Light: "#D6336C", Dark: "#FF7AB2"}
 	green   = lipgloss.AdaptiveColor{Light: "#2B8A3E", Dark: "#69DB7C"}
 	yellow  = lipgloss.AdaptiveColor{Light: "#E67700", Dark: "#FFD43B"}
+	blue    = lipgloss.AdaptiveColor{Light: "#1971C2", Dark: "#74C0FC"}
 	subtle  = lipgloss.AdaptiveColor{Light: "#868E96", Dark: "#6C7086"}
 	errColr = lipgloss.AdaptiveColor{Light: "#C92A2A", Dark: "#FF6B6B"}
 
@@ -41,13 +42,11 @@ func (m model) View() string {
 
 	header := m.viewHeader()
 
-	// Três colunas lado a lado quando cabe; senão empilha.
-	cols := 3
-	colWidth := (m.width - 4 - 2*(cols-1)) / cols
-	if colWidth < 34 {
-		cols = 1
-		colWidth = m.width - 4
+	n := 3
+	if m.cfg.jiraEnabled() {
+		n = 4
 	}
+	cols, colWidth := gridLayout(m.width-4, n)
 
 	var teamNote string
 	if m.prs.TeamReview > 0 {
@@ -56,20 +55,55 @@ func (m model) View() string {
 	reviewLine := func(p pr) string { return reviewPRLine(p, m.now) }
 	review := m.viewPRBox("Revisões pendentes", teamNote, m.prs.ToReview, m.prs.ToReviewTotal, reviewLine, pink, colWidth)
 	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, prLine, green, colWidth)
-	agenda := m.viewAgendaBox(colWidth)
-
-	var body string
-	box := boxStyle.Width(colWidth - 2)
-	if cols == 3 {
-		// Iguala a altura das caixas para a linha ficar alinhada.
-		box = box.Height(max(lipgloss.Height(review), lipgloss.Height(mine), lipgloss.Height(agenda)))
-		body = lipgloss.JoinHorizontal(lipgloss.Top, box.Render(review), "  ", box.Render(mine), "  ", box.Render(agenda))
-	} else {
-		body = lipgloss.JoinVertical(lipgloss.Left, box.Render(review), box.Render(mine), box.Render(agenda))
+	boxes := []string{review, mine}
+	if m.cfg.jiraEnabled() {
+		boxes = append(boxes, m.viewJiraBox(colWidth))
 	}
+	boxes = append(boxes, m.viewAgendaBox(colWidth))
+	body := renderGrid(boxes, cols, colWidth)
 
 	out := lipgloss.JoinVertical(lipgloss.Left, header, "", body, "", m.viewFooter())
 	return lipgloss.NewStyle().Padding(1, 2).Render(out)
+}
+
+const (
+	minBoxWidth = 34
+	boxGap      = 2
+)
+
+// gridLayout escolhe quantas caixas por linha cabem em width e equilibra as
+// linhas: 4 caixas que não cabem lado a lado viram 2×2, e não 3+1.
+func gridLayout(width, n int) (cols, colWidth int) {
+	cols = max(1, min(n, (width+boxGap)/(minBoxWidth+boxGap)))
+	rows := (n + cols - 1) / cols
+	cols = (n + rows - 1) / rows
+	return cols, (width - boxGap*(cols-1)) / cols
+}
+
+// renderGrid aplica a borda e monta as linhas, com a mesma altura dentro de
+// cada linha.
+func renderGrid(contents []string, cols, colWidth int) string {
+	var rows []string
+	for start := 0; start < len(contents); start += cols {
+		row := contents[start:min(start+cols, len(contents))]
+		h := 0
+		for _, c := range row {
+			h = max(h, lipgloss.Height(c))
+		}
+		box := boxStyle.Width(colWidth - 2)
+		if cols > 1 {
+			box = box.Height(h)
+		}
+		var parts []string
+		for i, c := range row {
+			if i > 0 {
+				parts = append(parts, strings.Repeat(" ", boxGap))
+			}
+			parts = append(parts, box.Render(c))
+		}
+		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Top, parts...))
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, rows...)
 }
 
 func (m model) viewHeader() string {
@@ -149,7 +183,7 @@ func (m model) viewPRBox(title, note string, prs []pr, total int, line func(pr) 
 	}
 	lines = append(lines, titleStyle.Render(count)+" "+title+m.spinner(m.prsLoading))
 	if note != "" {
-		lines = append(lines, dimStyle.Render(note))
+		lines = append(lines, wrapParts(note, inner)...)
 	}
 	lines = append(lines, "")
 
@@ -269,11 +303,33 @@ func mineSummary(prs []pr) string {
 			parts = append(parts, fmt.Sprintf("%d %s", n, many))
 		}
 	}
-	add(failing, "com CI falhando", "com CI falhando")
-	add(changes, "com mudanças pedidas", "com mudanças pedidas")
+	add(failing, "CI falhando", "CI falhando")
+	add(changes, "com mudanças", "com mudanças")
 	add(conflicts, "com conflito", "com conflito")
 	add(approved, "aprovado", "aprovados")
 	return strings.Join(parts, " · ")
+}
+
+// wrapParts quebra um resumo "a · b · c" em linhas de até width colunas,
+// sempre entre os itens, e devolve as linhas já em cinza.
+func wrapParts(note string, width int) []string {
+	var lines []string
+	cur := ""
+	for _, part := range strings.Split(note, " · ") {
+		switch {
+		case cur == "":
+			cur = part
+		case ansi.StringWidth(cur+" · "+part) <= width:
+			cur += " · " + part
+		default:
+			lines = append(lines, dimStyle.Render(ansi.Truncate(cur, width, "…")))
+			cur = part
+		}
+	}
+	if cur != "" {
+		lines = append(lines, dimStyle.Render(ansi.Truncate(cur, width, "…")))
+	}
+	return lines
 }
 
 func (m model) viewAgendaBox(width int) string {
@@ -328,6 +384,72 @@ func (m model) viewAgendaBox(width int) string {
 	return strings.Join(lines, "\n")
 }
 
+func (m model) viewJiraBox(width int) string {
+	inner := width - 2 - 2
+	titleStyle := lipgloss.NewStyle().Foreground(blue).Bold(true)
+
+	count := "…"
+	if !m.jira.At.IsZero() {
+		count = fmt.Sprint(len(m.jira.Issues))
+		if m.jira.More {
+			count += "+"
+		}
+	}
+	lines := []string{titleStyle.Render(count) + " Jira" + m.spinner(m.jiraLoading)}
+
+	var doing, todo int
+	for _, it := range m.jira.Issues {
+		switch it.Category {
+		case "indeterminate":
+			doing++
+		case "new":
+			todo++
+		}
+	}
+	var summary []string
+	if doing > 0 {
+		summary = append(summary, fmt.Sprintf("%d em andamento", doing))
+	}
+	if todo > 0 {
+		summary = append(summary, fmt.Sprintf("%d a fazer", todo))
+	}
+	if len(summary) > 0 {
+		lines = append(lines, wrapParts(strings.Join(summary, " · "), inner)...)
+	}
+	lines = append(lines, "")
+
+	if m.jira.Err != nil {
+		lines = append(lines, errStyle.Render(ansi.Truncate(m.jira.Err.Error(), inner, "…")))
+	}
+	if len(m.jira.Issues) == 0 && m.jira.Err == nil && !m.jira.At.IsZero() {
+		lines = append(lines, dimStyle.Render("nada atribuído ✨"))
+	}
+
+	for i, it := range m.jira.Issues {
+		if i == maxListItems {
+			more := fmt.Sprintf("+%d mais", len(m.jira.Issues)-maxListItems)
+			if m.jira.More {
+				more = "e mais"
+			}
+			lines = append(lines, dimStyle.Render(more))
+			break
+		}
+		lines = append(lines, ansi.Truncate(issueLine(it), inner, "…"))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// issueLine: chave colorida pelo andamento, status (se em andamento) e título.
+func issueLine(it issue) string {
+	switch it.Category {
+	case "indeterminate":
+		return waitStyle.Render(it.Key) + " " + dimStyle.Render(it.Status) + " " + it.Summary
+	case "done":
+		return okStyle.Render(it.Key) + " " + it.Summary
+	}
+	return dimStyle.Render(it.Key) + " " + it.Summary
+}
+
 func (m model) viewFooter() string {
 	parts := []string{}
 	if !m.prs.At.IsZero() {
@@ -336,7 +458,14 @@ func (m model) viewFooter() string {
 	if !m.agenda.At.IsZero() {
 		parts = append(parts, "agenda às "+m.agenda.At.Format("15:04"))
 	}
-	parts = append(parts, "r atualiza", "p abre revisões", "q sai")
+	if !m.jira.At.IsZero() {
+		parts = append(parts, "jira às "+m.jira.At.Format("15:04"))
+	}
+	parts = append(parts, "r atualiza", "p abre revisões")
+	if m.cfg.jiraEnabled() {
+		parts = append(parts, "j abre o Jira")
+	}
+	parts = append(parts, "q sai")
 	return dimStyle.Render(strings.Join(parts, " · "))
 }
 

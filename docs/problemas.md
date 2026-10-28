@@ -94,6 +94,29 @@ auth`) reflete as mudanças na hora.
 O painel usa o fuso do sistema. Confira com `date`. Se estiver errado, ajuste o
 fuso do sistema ou rode com `TZ=America/Sao_Paulo painel`.
 
+## Jira
+
+**A caixa do Jira não aparece**
+Faltam URL, e-mail ou token. Confira as chaves em
+[configuracao.md](configuracao.md#jira). Se você usa `ENV_FILE`, confira o
+caminho e os nomes (`JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`).
+
+**`jira: login recusado, confira o e-mail e o token`**
+O e-mail ou o token estão errados, ou o token foi revogado. O Jira Cloud não
+devolve erro nesse caso, só uma lista vazia, e o painel detecta isso para não
+mostrar "nada atribuído" por engano. Se o token vem de um `ENV_FILE` que usa
+`${OUTRA_VAR}`, confira se `OUTRA_VAR` está definida **antes** no arquivo.
+
+**`jira: HTTP 400: ...` com uma mensagem sobre a consulta**
+A `JIRA_JQL` é inválida. Teste a mesma busca na tela de filtros do Jira. Nomes
+de projeto que são palavras reservadas (como `INT`) precisam de aspas:
+`project = "INT"`.
+
+**`jira: HTTP 404`**
+`JIRA_URL` errada. Use só o endereço base, como `https://empresa.atlassian.net`,
+sem `/jira` ou `/browse` no fim. Jira Server/Data Center (instalado na empresa)
+não é suportado, só o Jira Cloud.
+
 ## Navegador
 
 **A tecla `p` ou o `painel auth` não abrem o navegador**

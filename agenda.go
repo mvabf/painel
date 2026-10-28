@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -121,12 +120,7 @@ func tidyEvents(events []event) []event {
 // (útil para testar com uma exportação do calendário).
 func openICS(src string) (io.ReadCloser, error) {
 	if !strings.HasPrefix(src, "http://") && !strings.HasPrefix(src, "https://") {
-		if rest, ok := strings.CutPrefix(src, "~/"); ok {
-			if home, err := os.UserHomeDir(); err == nil {
-				src = filepath.Join(home, rest)
-			}
-		}
-		return os.Open(src)
+		return os.Open(expandHome(src))
 	}
 
 	resp, err := httpClient.Get(src)

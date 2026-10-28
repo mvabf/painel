@@ -19,10 +19,11 @@ fictícios.
 | **Revisões pendentes** | PRs abertos em que pediram revisão **diretamente a você**, com há quanto tempo cada um espera (o mais antigo no topo, em amarelo a partir de 1 dia e vermelho a partir de 3), e abaixo quantos pedidos foram feitos só aos seus times |
 | **Meus PRs abertos** | PRs abertos de sua autoria com o estado do CI (✓ ✗ ●), marcadores de **aprovado**, **mudanças** pedidas e **conflito**, e um resumo do que pede atenção. Rascunhos (draft) aparecem apagados |
 | **Agenda de hoje** | Eventos do dia. Os que já passaram ficam riscados, o atual fica destacado e os de dia inteiro vêm primeiro |
+| **Jira** (opcional) | Cards atribuídos a você e não concluídos, os em andamento primeiro e com o status ("Em revisão"…), mais o resumo "N em andamento · N a fazer" |
 
 Os números se atualizam sozinhos: PRs a cada 2 minutos e agenda a cada 5. O
-relógio vira a cada segundo. Em terminais estreitos (menos de ~110 colunas), as
-caixas ficam empilhadas em vez de lado a lado.
+relógio vira a cada segundo. As caixas se organizam conforme a largura do
+terminal: lado a lado, em grade (2×2 com o Jira) ou empilhadas.
 
 Detalhes de como cada número é calculado estão em
 [docs/funcionamento.md](docs/funcionamento.md).
@@ -97,12 +98,36 @@ O painel lê a agenda de três jeitos. Escolha o primeiro que funcionar pra voc�
 O passo a passo de cada um, com os erros comuns, está em
 [docs/agenda.md](docs/agenda.md).
 
+## Conectando o Jira
+
+Opcional. Funciona com o Jira Cloud e um
+[token de API da Atlassian](https://id.atlassian.com/manage-profile/security/api-tokens).
+Adicione ao `~/.config/painel/config`:
+
+```sh
+JIRA_URL=https://suaempresa.atlassian.net
+JIRA_EMAIL=voce@empresa.com
+JIRA_TOKEN=seu-token
+```
+
+Se você já tem um arquivo com `JIRA_BASE_URL`, `JIRA_EMAIL` e `JIRA_API_TOKEN`
+(os nomes que outras ferramentas usam), aponte para ele em vez de copiar o token:
+
+```sh
+ENV_FILE=~/caminho/para/segredos.env
+```
+
+Por padrão, a caixa mostra `assignee = currentUser() AND statusCategory != Done`.
+Para outra busca, use `JIRA_JQL`. Detalhes em
+[docs/configuracao.md](docs/configuracao.md#jira).
+
 ## Atalhos
 
 | Tecla | Ação |
 |---|---|
-| `r` | Atualiza PRs e agenda agora |
+| `r` | Atualiza tudo agora |
 | `p` | Abre no navegador a lista de PRs pedindo sua revisão |
+| `j` | Abre no navegador a busca do Jira (se configurado) |
 | `q`, `esc` ou `ctrl+c` | Sai |
 
 ## Comandos
@@ -125,6 +150,7 @@ ICS_URL=https://calendar.google.com/calendar/ical/.../private-.../basic.ics
 EMAIL=ana@empresa.com
 PR_INTERVAL=2m
 CAL_INTERVAL=5m
+JIRA_URL=https://empresa.atlassian.net
 ```
 
 Qualquer chave também pode vir de uma variável de ambiente com o prefixo

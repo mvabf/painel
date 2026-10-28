@@ -80,7 +80,7 @@ PRs que não couberam na lista:
 
 ```
 8 Meus PRs abertos
-1 com CI falhando · 4 aprovados
+1 CI falhando · 4 aprovados
 ```
 
 Rascunhos não entram no resumo e não mostram status.
@@ -110,6 +110,27 @@ Destaques na caixa e no cabeçalho:
 - **Dia inteiro:** vem primeiro, com "dia todo", e não conta para "agora" e
   "próxima".
 
+## Jira
+
+Com o Jira configurado ([configuracao.md](configuracao.md#jira)), uma quarta
+caixa mostra o resultado da `JIRA_JQL`. Por padrão, os cards atribuídos a você
+e não concluídos:
+
+```
+10 Jira
+7 em andamento · 3 a fazer
+
+APP-24 Em revisão Corrige cálculo do frete
+APP-31 Fazendo Cache na cotação
+APP-40 Tela de rastreio
+```
+
+- Os **em andamento** vêm primeiro, com a chave em amarelo e o nome do status.
+  Os **a fazer** vêm depois, com a chave em cinza. Dentro de cada grupo, vale a
+  ordem da JQL.
+- O painel busca até 50 cards. Se houver mais, o número vira `50+`.
+- A tecla `j` abre a mesma busca no Jira, no navegador.
+
 ## Quando cada coisa atualiza
 
 | O quê | Quando |
@@ -117,6 +138,7 @@ Destaques na caixa e no cabeçalho:
 | Relógio, "agora/próxima", destaques da agenda, barra do expediente | A cada segundo, sincronizado com o relógio do sistema |
 | PRs | Ao abrir e depois a cada `PR_INTERVAL` (padrão 2 min) |
 | Agenda | Ao abrir e depois a cada `CAL_INTERVAL` (padrão 5 min) |
+| Jira | Ao abrir e depois a cada `JIRA_INTERVAL` (padrão 5 min) |
 | Tudo | Na hora, ao apertar `r` |
 
 O próximo ciclo só começa quando a busca anterior termina. Por isso, uma rede
@@ -141,8 +163,13 @@ lugar a "fim de semana 🎉".
 
 ## Layout
 
-- Com 110 colunas ou mais, as três caixas ficam lado a lado e com a mesma altura.
-- Abaixo disso, elas ficam empilhadas e ocupam a largura toda.
+- Cada caixa precisa de pelo menos 34 colunas. O painel coloca lado a lado
+  quantas couberem e equilibra as linhas. Com o Jira, por exemplo, 4 caixas
+  que não cabem numa linha viram 2×2 em vez de 3+1.
+- Sem o Jira (3 caixas): uma linha a partir de ~110 colunas e duas linhas a
+  partir de ~74. Com o Jira (4 caixas): uma linha a partir de ~146 colunas.
+- Num terminal mais estreito que isso, as caixas ficam empilhadas.
+- As caixas de uma mesma linha têm a mesma altura.
 - Títulos longos são cortados com `…` para não quebrar o layout.
 - O painel usa a tela alternativa do terminal: ao sair, seu terminal volta
   exatamente como estava.

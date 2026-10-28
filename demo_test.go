@@ -49,12 +49,14 @@ func withStatus(p pr, ci, review string, conflict bool) pr {
 
 func demoModel(now time.Time, loaded bool) model {
 	m := model{
-		cfg:           config{Name: "Ana", Agenda: "google"},
+		cfg: config{Name: "Ana", Agenda: "google",
+			JiraURL: "https://exemplo.atlassian.net", JiraEmail: "ana@exemplo.com", JiraToken: "x"},
 		now:           now,
 		width:         112,
 		height:        30,
 		prsLoading:    !loaded,
 		agendaLoading: !loaded,
+		jiraLoading:   !loaded,
 	}
 	if !loaded {
 		return m
@@ -85,6 +87,13 @@ func demoModel(now time.Time, loaded bool) model {
 			p("design-system", 341, "Tokens de cor para o tema escuro", true),
 		},
 	}
+	m.cfg.JiraURL, m.cfg.JiraEmail, m.cfg.JiraToken = "https://exemplo.atlassian.net", "ana@exemplo.com", "x"
+	m.jira = jiraResult{At: at(14, 59), Issues: []issue{
+		{Key: "APP-24", Summary: "Corrige cálculo do frete grátis", Status: "Em revisão", Category: "indeterminate"},
+		{Key: "APP-31", Summary: "Cache na cotação", Status: "Fazendo", Category: "indeterminate"},
+		{Key: "APP-40", Summary: "Tela de rastreio no app", Status: "A fazer", Category: "new"},
+		{Key: "APP-42", Summary: "Remover cupom expirado", Status: "A fazer", Category: "new"},
+	}}
 	m.agenda = agendaResult{At: at(14, 59), Events: []event{
 		{Title: "Aniversário do Pedro", AllDay: true, Start: at(0, 0), End: at(24, 0)},
 		ev(9, 30, 15, "Daily"),

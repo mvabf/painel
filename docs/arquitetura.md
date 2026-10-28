@@ -17,6 +17,7 @@ bigclock.go     fonte de 5 linhas do relógio grande
 prs.go          busca de PRs via `gh search prs`
 agenda.go       agenda via iCal (URL ou arquivo) e ordenação dos eventos
 google.go       login OAuth (`painel auth`) e agenda via Google Calendar API
+jira.go         cards do Jira Cloud (busca JQL)
 view_test.go    testes de renderização com dados falsos
 agenda_test.go  testes do iCal: recorrências, remarcações, recusados, repetidos
 demo_test.go    gera os quadros do GIF do README (só com PAINEL_DEMO_DIR)
@@ -69,6 +70,7 @@ horário da busca:
 func fetchPRs() prsResult
 func fetchAgenda(url, email string) agendaResult   // iCal
 func fetchGoogleAgenda() agendaResult              // Google Calendar API
+func fetchJira(cfg config) jiraResult               // Jira Cloud
 ```
 
 Todas são síncronas e não sabem nada da interface, o que facilita testar e
@@ -78,38 +80,40 @@ trocar. As duas fontes de agenda devolvem o mesmo `agendaResult` com
 
 ## Como adicionar uma caixa nova
 
-Exemplo: issues do Jira atribuídas a você.
+A caixa do Jira (`jira.go`) é o modelo mais recente e completo. Para uma caixa
+nova, por exemplo erros do Bugsnag:
 
-1. **Fonte**: crie `jira.go` com um tipo de resultado e uma função de busca:
+1. **Fonte**: crie `bugsnag.go` com um tipo de resultado e uma função de busca
+   que não saiba nada da interface:
 
    ```go
-   type jiraResult struct {
-       Issues []issue
+   type bugsnagResult struct {
+       Errors []bugsnagError
        Err    error
        At     time.Time
    }
 
-   func fetchJira(cfg config) jiraResult { ... }
+   func fetchBugsnag(cfg config) bugsnagResult { ... }
    ```
 
-2. **Configuração**: adicione as chaves necessárias em `config` e em
-   `loadConfig` (ex.: `JIRA_URL`, lido com `get("JIRA_URL")`).
+2. **Configuração**: adicione as chaves em `config` e em `loadConfig` (ex.:
+   `BUGSNAG_TOKEN`) e um método como `jiraEnabled` dizendo quando a caixa
+   aparece. Credenciais devem aceitar `ENV_FILE`, como as do Jira.
 
-3. **Modelo** (`model.go`):
-   - campos `jira jiraResult`, `jiraLoading bool`, `jiraGen int`;
-   - mensagens `jiraMsg` e `refreshJiraMsg struct{ gen int }`;
-   - `loadJira()` retornando um `tea.Cmd`;
-   - inclua `m.loadJira()` em `Init` e no atalho `r`;
-   - trate `jiraMsg` (guardar o resultado e agendar o próximo ciclo) e
-     `refreshJiraMsg` (conferir a geração), igual aos PRs.
+3. **Modelo** (`model.go`), igual ao Jira:
+   - campos `bugsnag bugsnagResult`, `bugsnagLoading bool`, `bugsnagGen int`;
+   - mensagens `bugsnagMsg` e `refreshBugsnagMsg struct{ gen int }`;
+   - `loadBugsnag()` retornando um `tea.Cmd` (ou `nil` se desligado);
+   - inclua em `Init` e no atalho `r`;
+   - trate `bugsnagMsg` (guardar, manter os dados antigos em caso de erro,
+     agendar o próximo ciclo) e `refreshBugsnagMsg` (conferir a geração).
 
-4. **Tela** (`view.go`): crie `viewJiraBox(width int) string`, que devolve só o
-   **conteúdo**. A borda e a altura comum são aplicadas em `View`. Adicione a
-   caixa ao `JoinHorizontal`/`JoinVertical` e ajuste o cálculo de `cols` se
-   passar de três colunas.
+4. **Tela** (`view.go`): crie `viewBugsnagBox(width int) string`, que devolve
+   só o **conteúdo**. Adicione-a à lista `boxes` em `View` e conte-a em `n`.
+   `gridLayout` e `renderGrid` cuidam de bordas, alturas e da grade.
 
-5. **Teste**: inclua dados falsos em `fakeModel` (`view_test.go`) e confira que
-   o texto aparece na tela.
+5. **Testes**: um `httptest.Server` para a fonte (veja `jira_test.go`) e dados
+   falsos em `view_test.go` conferindo o texto na tela.
 
 ## Estilo
 

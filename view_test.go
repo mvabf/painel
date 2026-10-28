@@ -51,6 +51,21 @@ func TestViewRenders(t *testing.T) {
 	}
 }
 
+func TestViewComJira(t *testing.T) {
+	m := fakeModel(150)
+	m.cfg.JiraURL, m.cfg.JiraEmail, m.cfg.JiraToken = "https://x", "a", "b"
+	m.jira = jiraResult{At: m.now, Issues: []issue{
+		{Key: "APP-1", Summary: "Corrige frete", Status: "Em revisão", Category: "indeterminate"},
+		{Key: "APP-2", Summary: "Tela de login", Status: "A fazer", Category: "new"},
+	}}
+	out := m.View()
+	for _, want := range []string{"2 Jira", "1 em andamento · 1 a fazer", "APP-1 Em revisão Corrige frete", "APP-2 Tela de login", "j abre o Jira"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("faltou %q na tela:\n%s", want, out)
+		}
+	}
+}
+
 func TestViewLoading(t *testing.T) {
 	m := model{cfg: config{Agenda: "ics"}, now: time.Now(), width: 160, prsLoading: true, agendaLoading: true}
 	out := m.View()
@@ -91,6 +106,18 @@ func TestPRLine(t *testing.T) {
 	}
 }
 
+func TestWrapParts(t *testing.T) {
+	got := wrapParts("1 CI falhando · 1 com mudanças · 1 com conflito · 2 aprovados", 30)
+	var plain []string
+	for _, l := range got {
+		plain = append(plain, ansi.Strip(l))
+	}
+	want := []string{"1 CI falhando · 1 com mudanças", "1 com conflito · 2 aprovados"}
+	if strings.Join(plain, "|") != strings.Join(want, "|") {
+		t.Errorf("got %q, want %q", plain, want)
+	}
+}
+
 func TestMineSummary(t *testing.T) {
 	prs := []pr{
 		{CI: "FAILURE", Review: "CHANGES_REQUESTED"},
@@ -98,7 +125,7 @@ func TestMineSummary(t *testing.T) {
 		{CI: "SUCCESS", Review: "APPROVED", Conflict: true},
 		{CI: "FAILURE", IsDraft: true}, // draft não conta
 	}
-	want := "1 com CI falhando · 1 com mudanças pedidas · 1 com conflito · 2 aprovados"
+	want := "1 CI falhando · 1 com mudanças · 1 com conflito · 2 aprovados"
 	if got := mineSummary(prs); got != want {
 		t.Errorf("got %q\nwant %q", got, want)
 	}

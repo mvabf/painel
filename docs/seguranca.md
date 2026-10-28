@@ -14,7 +14,7 @@ Tudo fica em `~/.config/painel/`. O painel cria essa pasta com permissão `700`
 
 | Arquivo | Conteúdo | Sensível? |
 |---|---|---|
-| `config` | Suas preferências. Pode conter `ICS_URL` | **Sim, se `ICS_URL` for um endereço secreto**: ele dá acesso à sua agenda inteira |
+| `config` | Suas preferências. Pode conter `ICS_URL` e `JIRA_TOKEN` | **Sim, se tiver um endereço secreto iCal ou o token do Jira**. Para o Jira, prefira `ENV_FILE` apontando para o arquivo onde o token já está |
 | `google-client.json` | Identificação do client OAuth que você criou no Google Cloud | Moderado: sozinho não dá acesso a nada, mas não deve ser publicado |
 | `google-token.json` | Token de acesso e de renovação do Google | **Sim**: permite ler os eventos da sua agenda |
 | `*.ics` (se você usar um arquivo local) | Cópia da sua agenda | **Sim**: títulos, participantes e descrições das reuniões |
@@ -34,6 +34,7 @@ no chaveiro do sistema (ou em `~/.config/gh/hosts.yml`).
 | Serviço | Acesso | Como revogar |
 |---|---|---|
 | GitHub | Os mesmos do seu `gh`. O painel só usa a API de busca | `gh auth logout`, ou em github.com > Settings > Applications |
+| Jira | As da sua conta Atlassian, pelo token de API. O painel só usa a busca (`/rest/api/3/search/jql`) | [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
 | Google Calendar (`painel auth`) | `calendar.events.readonly`: só leitura de eventos | [myaccount.google.com/permissions](https://myaccount.google.com/permissions) e apague `google-token.json` |
 | iCal secreto | Leitura da agenda para quem tiver o link | Google Calendar > Configurações > seu calendário > **Redefinir** endereço secreto |
 
@@ -45,6 +46,7 @@ no chaveiro do sistema (ou em `~/.config/gh/hosts.yml`).
 | O host de `ICS_URL` | A cada `CAL_INTERVAL`, se a fonte for iCal |
 | `oauth2.googleapis.com` e `www.googleapis.com` | A cada `CAL_INTERVAL`, se a fonte for Google |
 | `accounts.google.com` e `127.0.0.1:<porta aleatória>` | Só durante o `painel auth` |
+| O host de `JIRA_URL` | A cada `JIRA_INTERVAL`, se o Jira estiver configurado |
 
 O `painel auth` sobe um servidor temporário em `127.0.0.1` (acessível só na sua
 máquina) para receber a resposta do login. Ele usa PKCE e confere o parâmetro

@@ -14,6 +14,8 @@ type (
 	agendaMsg        agendaResult
 	refreshPRsMsg    struct{ gen int }
 	refreshAgendaMsg struct{ gen int }
+	jiraMsg          jiraResult
+	refreshJiraMsg   struct{ gen int }
 )
 
 type model struct {
@@ -28,14 +30,24 @@ type model struct {
 	agenda        agendaResult
 	agendaLoading bool
 	agendaGen     int
+
+	jira        jiraResult
+	jiraLoading bool
+	jiraGen     int
 }
 
 func newModel(cfg config) model {
-	return model{cfg: cfg, now: time.Now(), prsLoading: true, agendaLoading: cfg.Agenda != ""}
+	return model{
+		cfg:           cfg,
+		now:           time.Now(),
+		prsLoading:    true,
+		agendaLoading: cfg.Agenda != "",
+		jiraLoading:   cfg.jiraEnabled(),
+	}
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(tick(), m.loadPRs(), m.loadAgenda())
+	return tea.Batch(tick(), m.loadPRs(), m.loadAgenda(), m.loadJira())
 }
 
 func tick() tea.Cmd {
@@ -60,6 +72,14 @@ func (m model) loadAgenda() tea.Cmd {
 	return nil
 }
 
+func (m model) loadJira() tea.Cmd {
+	if !m.cfg.jiraEnabled() {
+		return nil
+	}
+	cfg := m.cfg
+	return func() tea.Msg { return jiraMsg(fetchJira(cfg)) }
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -70,11 +90,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Invalida os refreshes agendados para não buscar duas vezes.
 			m.prsGen++
 			m.agendaGen++
+			m.jiraGen++
 			m.prsLoading = true
 			m.agendaLoading = m.cfg.Agenda != ""
-			return m, tea.Batch(m.loadPRs(), m.loadAgenda())
+			m.jiraLoading = m.cfg.jiraEnabled()
+			return m, tea.Batch(m.loadPRs(), m.loadAgenda(), m.loadJira())
 		case "p":
 			return m, openURL("https://github.com/pulls/review-requested")
+		case "j":
+			if m.cfg.jiraEnabled() {
+				return m, openURL(jiraBrowseURL(m.cfg))
+			}
 		}
 
 	case tea.WindowSizeMsg:
@@ -106,6 +132,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		gen := m.agendaGen
 		return m, tea.Tick(m.cfg.CalInterval, func(time.Time) tea.Msg { return refreshAgendaMsg{gen} })
+
+	case jiraMsg:
+		m.jiraLoading = false
+		res := jiraResult(msg)
+		if res.Err != nil {
+			m.jira.Err, m.jira.At = res.Err, res.At
+		} else {
+			m.jira = res
+		}
+		gen := m.jiraGen
+		return m, tea.Tick(m.cfg.JiraInterval, func(time.Time) tea.Msg { return refreshJiraMsg{gen} })
+
+	case refreshJiraMsg:
+		if msg.gen == m.jiraGen {
+			m.jiraLoading = true
+			return m, m.loadJira()
+		}
 
 	case refreshPRsMsg:
 		if msg.gen == m.prsGen {
