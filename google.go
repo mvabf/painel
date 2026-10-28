@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -94,7 +93,7 @@ func googleAuth() error {
 
 	fmt.Println("Abrindo o navegador para login no Google. Se não abrir, acesse:")
 	fmt.Println(authURL)
-	_ = exec.Command("xdg-open", authURL).Start()
+	_ = openBrowser(authURL)
 
 	var q url.Values
 	select {
@@ -182,6 +181,7 @@ func fetchGoogleAgenda() agendaResult {
 		Items []struct {
 			Summary   string `json:"summary"`
 			Status    string `json:"status"`
+			EventType string `json:"eventType"`
 			Location  string `json:"location"`
 			Start     when   `json:"start"`
 			End       when   `json:"end"`
@@ -197,7 +197,8 @@ func fetchGoogleAgenda() agendaResult {
 	}
 
 	for _, it := range body.Items {
-		if it.Status == "cancelled" {
+		// "workingLocation" é o "trabalhando de casa/escritório" do Google, não uma reunião.
+		if it.Status == "cancelled" || it.EventType == "workingLocation" {
 			continue
 		}
 		declined := false
@@ -221,7 +222,6 @@ func fetchGoogleAgenda() agendaResult {
 		res.Events = append(res.Events, ev)
 	}
 
-	// Mesma ordem do iCal: eventos de dia inteiro primeiro.
-	sortEvents(res.Events)
+	res.Events = tidyEvents(res.Events)
 	return res
 }
