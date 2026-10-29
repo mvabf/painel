@@ -121,6 +121,21 @@ Por padrão, a caixa mostra `assignee = currentUser() AND statusCategory != Done
 Para outra busca, use `JIRA_JQL`. Detalhes em
 [docs/configuracao.md](docs/configuracao.md#jira).
 
+## Notificações
+
+O painel pode avisar no desktop (com som, se você quiser) quando chega um
+pedido de revisão, quando um PR seu é aprovado ou o CI falha, quando aparece
+um card novo no Jira e 5 minutos antes de cada reunião. Vem desligado; para
+ligar:
+
+```sh
+NOTIFY=on
+NOTIFY_SOUND=ci,meeting   # som só para o que é urgente
+```
+
+Detalhes e o que funciona em cada sistema em
+[docs/notificacoes.md](docs/notificacoes.md).
+
 ## Atalhos
 
 | Tecla | Ação |
@@ -151,6 +166,7 @@ EMAIL=ana@empresa.com
 PR_INTERVAL=2m
 CAL_INTERVAL=5m
 REVIEW_MAX_AGE=7d    # só pedidos de revisão da última semana
+NOTIFY=on            # avisos no desktop
 JIRA_URL=https://empresa.atlassian.net
 ```
 
@@ -192,6 +208,7 @@ A lista completa está em [docs/problemas.md](docs/problemas.md).
 | [docs/agenda.md](docs/agenda.md) | Conectar a agenda (iCal, Google, arquivo) |
 | [docs/configuracao.md](docs/configuracao.md) | Referência de todas as opções |
 | [docs/funcionamento.md](docs/funcionamento.md) | Como os números são calculados e quando atualizam |
+| [docs/notificacoes.md](docs/notificacoes.md) | Avisos no desktop e com som |
 | [docs/seguranca.md](docs/seguranca.md) | O que é guardado e quais acessos o painel tem |
 | [docs/problemas.md](docs/problemas.md) | Erros e como resolver |
 | [docs/arquitetura.md](docs/arquitetura.md) | Como o código é organizado, para quem quer contribuir |

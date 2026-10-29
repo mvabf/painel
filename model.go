@@ -34,6 +34,8 @@ type model struct {
 	jira        jiraResult
 	jiraLoading bool
 	jiraGen     int
+
+	meetingsSent map[string]bool
 }
 
 func newModel(cfg config) model {
@@ -43,6 +45,7 @@ func newModel(cfg config) model {
 		prsLoading:    true,
 		agendaLoading: cfg.Agenda != "",
 		jiraLoading:   cfg.jiraEnabled(),
+		meetingsSent:  map[string]bool{},
 	}
 }
 
@@ -108,19 +111,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tickMsg:
 		m.now = time.Time(msg)
-		return m, tick()
+		var notes []notice
+		if m.cfg.Notify[evMeeting] && m.meetingsSent != nil {
+			notes = meetingNotices(m.agenda.Events, m.now, m.cfg.NotifyBefore, m.meetingsSent)
+		}
+		return m, tea.Batch(tick(), m.notify(notes))
 
 	case prsMsg:
 		m.prsLoading = false
 		res := prsResult(msg)
+		var notes []notice
 		if res.Err != nil {
 			// Mantém os últimos números na tela e só sinaliza o erro.
 			m.prs.Err, m.prs.At = res.Err, res.At
 		} else {
+			notes = prNotices(m.prs, res)
 			m.prs = res
 		}
 		gen := m.prsGen
-		return m, tea.Tick(m.cfg.PRInterval, func(time.Time) tea.Msg { return refreshPRsMsg{gen} })
+		return m, tea.Batch(m.notify(notes), tea.Tick(m.cfg.PRInterval, func(time.Time) tea.Msg { return refreshPRsMsg{gen} }))
 
 	case agendaMsg:
 		m.agendaLoading = false
@@ -136,13 +145,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case jiraMsg:
 		m.jiraLoading = false
 		res := jiraResult(msg)
+		var notes []notice
 		if res.Err != nil {
 			m.jira.Err, m.jira.At = res.Err, res.At
 		} else {
+			notes = jiraNotices(m.jira, res)
 			m.jira = res
 		}
 		gen := m.jiraGen
-		return m, tea.Tick(m.cfg.JiraInterval, func(time.Time) tea.Msg { return refreshJiraMsg{gen} })
+		return m, tea.Batch(m.notify(notes), tea.Tick(m.cfg.JiraInterval, func(time.Time) tea.Msg { return refreshJiraMsg{gen} }))
 
 	case refreshJiraMsg:
 		if msg.gen == m.jiraGen {

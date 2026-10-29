@@ -48,6 +48,9 @@ PAINEL_AGENDA=ics PAINEL_ICS_URL=~/Downloads/teste.ics painel
 | `JIRA_TOKEN` | `JIRA_API_TOKEN` | Token de API da Atlassian |
 | `JIRA_JQL` | `assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC` | Busca mostrada na caixa |
 | `JIRA_INTERVAL` | `5m` | De quanto em quanto tempo buscar o Jira |
+| `NOTIFY` | `off` | Avisos no desktop: `on`, `off` ou uma lista como `review,ci,meeting`. Veja [notificacoes.md](notificacoes.md) |
+| `NOTIFY_SOUND` | `off` | Quais avisos também tocam som, no mesmo formato de `NOTIFY` |
+| `NOTIFY_BEFORE` | `5m` | Com quanta antecedência avisar de uma reunião |
 
 Nas chaves do Jira, a coluna "Padrão" indica o nome padrão usado como
 alternativa (veja [Jira](#jira)). A caixa do Jira só aparece com URL, e-mail e

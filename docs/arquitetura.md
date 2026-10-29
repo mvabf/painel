@@ -14,12 +14,14 @@ config.go       leitura de ~/.config/painel/config e das variáveis PAINEL_*
 model.go        estado, mensagens e Update: relógio, ciclos de busca, teclas
 view.go         View: layout, caixas, cores e textos
 bigclock.go     fonte de 5 linhas do relógio grande
-prs.go          busca de PRs via `gh search prs`
+prs.go          busca de PRs via `gh api graphql` (uma consulta só)
 agenda.go       agenda via iCal (URL ou arquivo) e ordenação dos eventos
 google.go       login OAuth (`painel auth`) e agenda via Google Calendar API
 jira.go         cards do Jira Cloud (busca JQL)
+notify.go       notificações no desktop: o que mudou entre duas buscas e o envio
 view_test.go    testes de renderização com dados falsos
 agenda_test.go  testes do iCal: recorrências, remarcações, recusados, repetidos
+notify_test.go  testes de quando cada aviso dispara
 demo_test.go    gera os quadros do GIF do README (só com PAINEL_DEMO_DIR)
 scripts/demo_gif.py       desenha os quadros em docs/demo.gif
 .goreleaser.yaml          como os executáveis de release são gerados

@@ -25,6 +25,10 @@ type config struct {
 	JiraToken    string
 	JiraJQL      string
 	JiraInterval time.Duration
+
+	Notify       map[string]bool // eventos que viram notificação no desktop
+	NotifySound  map[string]bool // eventos que também tocam som
+	NotifyBefore time.Duration   // antecedência do aviso de reunião
 }
 
 const defaultJiraJQL = "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC"
@@ -84,6 +88,10 @@ func loadConfig() config {
 		JiraToken:    first(get("JIRA_TOKEN"), std("JIRA_API_TOKEN")),
 		JiraJQL:      first(get("JIRA_JQL"), defaultJiraJQL),
 		JiraInterval: parseDuration(get("JIRA_INTERVAL"), 5*time.Minute),
+
+		Notify:       parseEvents(get("NOTIFY")),
+		NotifySound:  parseEvents(get("NOTIFY_SOUND")),
+		NotifyBefore: parseDuration(get("NOTIFY_BEFORE"), 5*time.Minute),
 	}
 	if cfg.Name == "" {
 		cfg.Name = gitFirstName()

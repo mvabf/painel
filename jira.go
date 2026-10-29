@@ -81,6 +81,7 @@ func fetchJira(cfg config) jiraResult {
 		return res
 	}
 
+	res.Issues = []issue{}
 	for _, it := range body.Issues {
 		res.Issues = append(res.Issues, issue{
 			Key:      it.Key,
