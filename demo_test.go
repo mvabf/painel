@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
@@ -29,8 +31,15 @@ func TestDemoFrames(t *testing.T) {
 	// reunião das 14h termina e a das 15h começa; depois as setas descem
 	// pelas revisões até os meus PRs.
 	start := time.Date(2026, 10, 28, 14, 59, 53, 0, time.Local)
+	loaded := demoModel(start.Add(3*time.Second), true)
 	for i := 0; i < 21; i++ {
-		m := demoModel(start.Add(time.Duration(i)*time.Second), i >= 3)
+		now := start.Add(time.Duration(i) * time.Second)
+		m := demoModel(now, false)
+		if i >= 3 {
+			m = loaded
+			m.now = now
+		}
+		m.demo = false
 		for step := 14; step <= i; step += 2 {
 			m = m.move(1)
 		}
@@ -41,80 +50,16 @@ func TestDemoFrames(t *testing.T) {
 	}
 }
 
-func requested(p pr, at time.Time) pr {
-	p.RequestedAt = at
-	return p
-}
-
-func withStatus(p pr, ci, review string, conflict bool) pr {
-	p.CI, p.Review, p.Conflict = ci, review, conflict
-	return p
-}
-
-func withLink(e event) event {
-	e.Link = "https://meet.google.com/abc-defg-hij"
-	return e
-}
-
-func demoModel(now time.Time, loaded bool) model {
-	m := model{
-		cfg: config{Name: "Ana", Agenda: "google",
-			JiraURL: "https://exemplo.atlassian.net", JiraEmail: "ana@exemplo.com", JiraToken: "x"},
-		now:           now,
-		width:         112,
-		height:        30,
-		prsLoading:    !loaded,
-		agendaLoading: !loaded,
-		jiraLoading:   !loaded,
+func TestPainelDemo(t *testing.T) {
+	m := demoModel(time.Now(), true)
+	if !strings.Contains(m.View(), "demo com dados fictícios") {
+		t.Error("o rodapé deveria avisar que é demo")
 	}
-	if !loaded {
-		return m
+	if _, cmd := press(m, "down", "enter"); cmd != nil {
+		t.Error("na demo, enter não deveria abrir os links fictícios")
 	}
-
-	at := func(h, min int) time.Time { return time.Date(2026, 10, 28, h, min, 0, 0, time.Local) }
-	p := func(repo string, n int, title string, draft bool) pr {
-		return pr{Number: n, Title: title, IsDraft: draft, Repo: repo, CI: "SUCCESS",
-			URL: fmt.Sprintf("https://github.com/exemplo/%s/pull/%d", repo, n)}
+	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("r")})
+	if cmd != nil || next.(model).prsLoading {
+		t.Error("na demo, r não deveria buscar nada")
 	}
-	ev := func(h, min, dur int, title string) event {
-		return event{Title: title, Start: at(h, min), End: at(h, min).Add(time.Duration(dur) * time.Minute)}
-	}
-
-	card := func(p pr, key string) pr {
-		p.Keys = []string{key}
-		return p
-	}
-	m.prs = prsResult{
-		At: at(14, 59),
-		ToReview: []pr{
-			requested(card(p("checkout", 482, "Corrige arredondamento do frete grátis", false), "APP-24"), at(14, 59).Add(-4*24*time.Hour)),
-			requested(p("api-pedidos", 1290, "Adiciona retry no webhook de pagamento", false), at(14, 59).Add(-30*time.Hour)),
-			requested(p("app-mobile", 77, "Nova tela de rastreio", false), at(13, 12)),
-		},
-		ToReviewTotal: 3,
-		MineTotal:     4,
-		TeamReview:    12,
-		Mine: []pr{
-			withStatus(card(p("api-pedidos", 1287, "Cache na cotação de transportadoras", false), "APP-31"), "SUCCESS", "APPROVED", false),
-			withStatus(card(p("checkout", 479, "Remove cupom expirado do carrinho", false), "APP-42"), "FAILURE", "CHANGES_REQUESTED", false),
-			withStatus(p("api-pedidos", 1281, "Migra fila de notas fiscais", false), "PENDING", "", true),
-			p("design-system", 341, "Tokens de cor para o tema escuro", true),
-		},
-	}
-	m.cfg.JiraURL, m.cfg.JiraEmail, m.cfg.JiraToken = "https://exemplo.atlassian.net", "ana@exemplo.com", "x"
-	m.jira = jiraResult{At: at(14, 59), Issues: []issue{
-		{Key: "APP-24", Summary: "Corrige cálculo do frete grátis", Status: "Em revisão", Category: "indeterminate"},
-		{Key: "APP-31", Summary: "Cache na cotação", Status: "Fazendo", Category: "indeterminate"},
-		{Key: "APP-40", Summary: "Tela de rastreio no app", Status: "A fazer", Category: "new"},
-		{Key: "APP-42", Summary: "Remover cupom expirado", Status: "A fazer", Category: "new"},
-	}}
-	m.agenda = agendaResult{At: at(14, 59), Events: []event{
-		{Title: "Aniversário do Pedro", AllDay: true, Start: at(0, 0), End: at(24, 0)},
-		ev(9, 30, 15, "Daily"),
-		ev(11, 0, 60, "Planejamento da sprint"),
-		ev(14, 0, 60, "Refinamento"),
-		withLink(ev(15, 0, 45, "Pareamento com o time")),
-		withLink(ev(17, 30, 30, "1:1 com a liderança")),
-	}}
-	return m
 }

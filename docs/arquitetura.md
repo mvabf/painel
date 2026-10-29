@@ -14,6 +14,7 @@ config.go       leitura de ~/.config/painel/config e das variáveis PAINEL_*
 model.go        estado, mensagens e Update: relógio, ciclos de busca, teclas
 view.go         View: layout, caixas, cores e textos
 bigclock.go     fonte de 5 linhas do relógio grande
+demo.go         dados fictícios do `painel demo` e do GIF do README
 prs.go          busca de PRs via `gh api graphql` (uma consulta só)
 agenda.go       agenda via iCal (URL ou arquivo) e ordenação dos eventos
 google.go       login OAuth (`painel auth`) e agenda via Google Calendar API
@@ -24,7 +25,7 @@ view_test.go    testes de renderização com dados falsos
 agenda_test.go  testes do iCal: recorrências, remarcações, recusados, repetidos
 nav_test.go     testes das teclas de navegação e dos links de reunião
 notify_test.go  testes de quando cada aviso dispara
-demo_test.go    gera os quadros do GIF do README (só com PAINEL_DEMO_DIR)
+demo_test.go    gera os quadros do GIF do README (só com PAINEL_DEMO_DIR) e testa a demo
 scripts/demo_gif.py       desenha os quadros em docs/demo.gif
 .goreleaser.yaml          como os executáveis de release são gerados
 .github/workflows/ci.yml  testes e compilação em cada push e PR
@@ -162,7 +163,7 @@ make demo-gif
 `TestDemoFrames` renderiza a `View` segundo a segundo (14:59:53 a 15:00:06,
 para mostrar a virada da reunião) com cores truecolor e grava cada quadro em
 ANSI. `scripts/demo_gif.py` desenha esses quadros com Pillow e a fonte DejaVu
-Sans Mono. Os dados ficam em `demoModel`, em `demo_test.go`.
+Sans Mono. Os dados ficam em `demoModel`, em `demo.go`, os mesmos do `painel demo`.
 
 ## Dependências
 

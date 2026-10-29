@@ -154,6 +154,7 @@ Detalhes e o que funciona em cada sistema em
 ```sh
 painel          # abre o dashboard
 painel auth     # login no Google Calendar (uma vez)
+painel demo     # a tela com dados fictícios, sem login em nada
 painel version  # versão instalada
 painel help     # ajuda
 ```

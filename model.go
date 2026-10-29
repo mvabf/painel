@@ -19,6 +19,7 @@ type (
 )
 
 type model struct {
+	demo          bool // dados fictícios do `painel demo`: não busca nada
 	cfg           config
 	now           time.Time
 	width, height int
@@ -52,6 +53,9 @@ func newModel(cfg config) model {
 }
 
 func (m model) Init() tea.Cmd {
+	if m.demo {
+		return tick()
+	}
 	return tea.Batch(tick(), m.loadPRs(), m.loadAgenda(), m.loadJira())
 }
 
@@ -105,10 +109,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "shift+tab":
 			return m.jump(-1), nil
 		case "enter":
-			if it, i := m.selected(); i >= 0 {
+			if it, i := m.selected(); i >= 0 && !m.demo {
 				return m, openURL(it.URL)
 			}
 		case "r":
+			if m.demo {
+				return m, nil
+			}
 			// Invalida os refreshes agendados para não buscar duas vezes.
 			m.prsGen++
 			m.agendaGen++

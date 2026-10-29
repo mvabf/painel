@@ -574,6 +574,9 @@ func prTag(p pr) string {
 
 func (m model) viewFooter() string {
 	parts := []string{}
+	if m.demo {
+		parts = append(parts, waitStyle.Render("demo com dados fictícios"))
+	}
 	if !m.prs.At.IsZero() {
 		parts = append(parts, "PRs às "+m.prs.At.Format("15:04"))
 	}
