@@ -122,3 +122,13 @@ não é suportado, só o Jira Cloud.
 **A tecla `p` ou o `painel auth` não abrem o navegador**
 O painel usa `xdg-open` no Linux, `open` no macOS e o handler padrão no Windows.
 No `painel auth`, o link também é impresso no terminal: copie e abra à mão.
+
+## `make docker-*` falha baixando dependências
+
+Erros como `lookup proxy.golang.org: i/o timeout` no `docker build` querem
+dizer que o container não está conseguindo resolver nomes, o que é comum com
+VPN. Use a rede da máquina:
+
+```sh
+make docker-test DOCKER_FLAGS=--network=host
+```

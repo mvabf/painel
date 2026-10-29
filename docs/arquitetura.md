@@ -27,6 +27,7 @@ nav_test.go     testes das teclas de navegação e dos links de reunião
 notify_test.go  testes de quando cada aviso dispara
 demo_test.go    gera os quadros do GIF do README (só com PAINEL_DEMO_DIR) e testa a demo
 scripts/demo_gif.py       desenha os quadros em docs/demo.gif
+.devcontainer/            imagem de desenvolvimento (Dev Container, Codespaces e make docker-*)
 .goreleaser.yaml          como os executáveis de release são gerados
 .github/workflows/ci.yml  testes e compilação em cada push e PR
 .github/workflows/release.yml  publica a release quando sobe uma tag v*

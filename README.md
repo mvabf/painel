@@ -221,13 +221,14 @@ A lista completa está em [docs/problemas.md](docs/problemas.md).
 
 ## Contribuindo
 
-Ideias e PRs são bem-vindos. Há três jeitos de montar o ambiente, do que pede
+Ideias e PRs são bem-vindos. Há quatro jeitos de montar o ambiente, do que pede
 menos para o que pede mais:
 
 | Jeito | Precisa de | Como |
 |---|---|---|
 | **GitHub Codespaces** | Só o navegador | No repositório, **Code > Codespaces > Create codespace**. O ambiente abre pronto, com Go, `gh`, Python e as fontes do GIF |
 | **Dev Container** | VS Code e Docker | Abra a pasta no VS Code e aceite **Reopen in Container** (extensão Dev Containers) |
+| **Só Docker** | Docker | `make docker-test`, `make docker-demo` e `make docker-demo-gif` rodam numa imagem pronta |
 | **Na sua máquina** | Go 1.24 | `make build && ./painel` |
 
 Em qualquer um deles:
