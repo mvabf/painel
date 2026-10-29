@@ -221,12 +221,28 @@ A lista completa está em [docs/problemas.md](docs/problemas.md).
 
 ## Contribuindo
 
-Ideias e PRs são bem-vindos. Para rodar a partir do código:
+Ideias e PRs são bem-vindos. Há três jeitos de montar o ambiente, do que pede
+menos para o que pede mais:
+
+| Jeito | Precisa de | Como |
+|---|---|---|
+| **GitHub Codespaces** | Só o navegador | No repositório, **Code > Codespaces > Create codespace**. O ambiente abre pronto, com Go, `gh`, Python e as fontes do GIF |
+| **Dev Container** | VS Code e Docker | Abra a pasta no VS Code e aceite **Reopen in Container** (extensão Dev Containers) |
+| **Na sua máquina** | Go 1.24 | `make build && ./painel` |
+
+Em qualquer um deles:
 
 ```sh
-make build && ./painel   # compila e roda
-make test                # testes
+go run . demo   # a tela com dados fictícios, sem login em nada
+make test       # testes
+make demo-gif   # regenera docs/demo.gif (precisa de Python 3 + Pillow)
 ```
+
+O `painel demo` é o jeito mais rápido de ver uma mudança na tela: ele usa os
+mesmos dados fictícios do GIF e não busca nada. Para testar com dados reais
+dentro do container, rode `gh auth login` lá dentro. Notificações e o `enter`
+que abre o navegador não funcionam no container, porque ele não alcança a sua
+área de trabalho.
 
 O CI roda formatação, `go vet`, testes e a compilação para todos os sistemas
 em cada push e PR.

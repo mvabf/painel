@@ -1,0 +1,23 @@
+{
+  "name": "painel",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "vscode"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "go build ./... && go test ./...",
+  "customizations": {
+    "vscode": {
+      "extensions": ["golang.go"]
+    },
+    "codespaces": {
+      "openFiles": ["README.md"]
+    }
+  }
+}
