@@ -25,11 +25,15 @@ func TestDemoFrames(t *testing.T) {
 	lipgloss.SetColorProfile(termenv.TrueColor)
 	lipgloss.SetHasDarkBackground(true)
 
-	// 14:59:53 → 15:00:06: carrega os dados e vira o minuto, quando a
-	// reunião das 14h termina e a das 15h começa.
+	// 14:59:53 → 15:00:13: carrega os dados e vira o minuto, quando a
+	// reunião das 14h termina e a das 15h começa; depois as setas descem
+	// pelas revisões até os meus PRs.
 	start := time.Date(2026, 10, 28, 14, 59, 53, 0, time.Local)
-	for i := 0; i < 14; i++ {
+	for i := 0; i < 21; i++ {
 		m := demoModel(start.Add(time.Duration(i)*time.Second), i >= 3)
+		for step := 14; step <= i; step += 2 {
+			m = m.move(1)
+		}
 		name := filepath.Join(dir, fmt.Sprintf("frame_%03d.ans", i))
 		if err := os.WriteFile(name, []byte(m.View()), 0o644); err != nil {
 			t.Fatal(err)
@@ -45,6 +49,11 @@ func requested(p pr, at time.Time) pr {
 func withStatus(p pr, ci, review string, conflict bool) pr {
 	p.CI, p.Review, p.Conflict = ci, review, conflict
 	return p
+}
+
+func withLink(e event) event {
+	e.Link = "https://meet.google.com/abc-defg-hij"
+	return e
 }
 
 func demoModel(now time.Time, loaded bool) model {
@@ -64,16 +73,21 @@ func demoModel(now time.Time, loaded bool) model {
 
 	at := func(h, min int) time.Time { return time.Date(2026, 10, 28, h, min, 0, 0, time.Local) }
 	p := func(repo string, n int, title string, draft bool) pr {
-		return pr{Number: n, Title: title, IsDraft: draft, Repo: repo, CI: "SUCCESS"}
+		return pr{Number: n, Title: title, IsDraft: draft, Repo: repo, CI: "SUCCESS",
+			URL: fmt.Sprintf("https://github.com/exemplo/%s/pull/%d", repo, n)}
 	}
 	ev := func(h, min, dur int, title string) event {
 		return event{Title: title, Start: at(h, min), End: at(h, min).Add(time.Duration(dur) * time.Minute)}
 	}
 
+	card := func(p pr, key string) pr {
+		p.Keys = []string{key}
+		return p
+	}
 	m.prs = prsResult{
 		At: at(14, 59),
 		ToReview: []pr{
-			requested(p("checkout", 482, "Corrige arredondamento do frete grátis", false), at(14, 59).Add(-4*24*time.Hour)),
+			requested(card(p("checkout", 482, "Corrige arredondamento do frete grátis", false), "APP-24"), at(14, 59).Add(-4*24*time.Hour)),
 			requested(p("api-pedidos", 1290, "Adiciona retry no webhook de pagamento", false), at(14, 59).Add(-30*time.Hour)),
 			requested(p("app-mobile", 77, "Nova tela de rastreio", false), at(13, 12)),
 		},
@@ -81,8 +95,8 @@ func demoModel(now time.Time, loaded bool) model {
 		MineTotal:     4,
 		TeamReview:    12,
 		Mine: []pr{
-			withStatus(p("api-pedidos", 1287, "Cache na cotação de transportadoras", false), "SUCCESS", "APPROVED", false),
-			withStatus(p("checkout", 479, "Remove cupom expirado do carrinho", false), "FAILURE", "CHANGES_REQUESTED", false),
+			withStatus(card(p("api-pedidos", 1287, "Cache na cotação de transportadoras", false), "APP-31"), "SUCCESS", "APPROVED", false),
+			withStatus(card(p("checkout", 479, "Remove cupom expirado do carrinho", false), "APP-42"), "FAILURE", "CHANGES_REQUESTED", false),
 			withStatus(p("api-pedidos", 1281, "Migra fila de notas fiscais", false), "PENDING", "", true),
 			p("design-system", 341, "Tokens de cor para o tema escuro", true),
 		},
@@ -99,8 +113,8 @@ func demoModel(now time.Time, loaded bool) model {
 		ev(9, 30, 15, "Daily"),
 		ev(11, 0, 60, "Planejamento da sprint"),
 		ev(14, 0, 60, "Refinamento"),
-		ev(15, 0, 45, "Pareamento com o time"),
-		ev(17, 30, 30, "1:1 com a liderança"),
+		withLink(ev(15, 0, 45, "Pareamento com o time")),
+		withLink(ev(17, 30, 30, "1:1 com a liderança")),
 	}}
 	return m
 }

@@ -34,23 +34,23 @@ SGR = re.compile(r"\x1b\[([0-9;]*)m")
 
 
 def parse(text):
-    """Devolve linhas de células (char, cor, negrito, riscado)."""
+    """Devolve linhas de células (char, cor, fundo, negrito, riscado)."""
     lines = []
     for raw in text.split("\n"):
         cells, pos = [], 0
-        fg, bold, strike = None, False, False
+        fg, bg, bold, strike = None, None, False, False
         for m in SGR.finditer(raw + "\x1b[m"):
             for ch in raw[pos:m.start()]:
-                cells.append((ch, fg, bold, strike))
+                cells.append((ch, fg, bg, bold, strike))
                 if unicodedata.east_asian_width(ch) in "WF":
-                    cells.append(("", fg, bold, strike))
+                    cells.append(("", fg, bg, bold, strike))
             pos = m.end()
             params = [int(p) if p else 0 for p in m.group(1).split(";")]
             i = 0
             while i < len(params):
                 p = params[i]
                 if p == 0:
-                    fg, bold, strike = None, False, False
+                    fg, bg, bold, strike = None, None, False, False
                 elif p == 1:
                     bold = True
                 elif p == 22:
@@ -61,8 +61,13 @@ def parse(text):
                     strike = False
                 elif p == 39:
                     fg = None
+                elif p == 49:
+                    bg = None
                 elif p == 38 and i + 4 < len(params) and params[i + 1] == 2:
                     fg = tuple(params[i + 2:i + 5])
+                    i += 4
+                elif p == 48 and i + 4 < len(params) and params[i + 1] == 2:
+                    bg = tuple(params[i + 2:i + 5])
                     i += 4
                 i += 1
         lines.append(cells)
@@ -119,10 +124,12 @@ def render(lines, cols, rows):
 
     for row, cells in enumerate(lines[:rows]):
         y = TITLE_BAR + row * LINE_HEIGHT
-        for col, (ch, fg, bold, strike) in enumerate(cells):
+        for col, (ch, fg, bg, bold, strike) in enumerate(cells):
+            x = MARGIN + col * CELL_W
+            if bg:
+                d.rectangle([x, y, x + CELL_W - 1, y + LINE_HEIGHT - 1], fill=bg)
             if not ch or ch == " ":
                 continue
-            x = MARGIN + col * CELL_W
             color = fg or FG
             if not draw_box_char(d, ch, x, y, color):
                 font = fallback if 0x2800 <= ord(ch) <= 0x28FF else (mono_bold if bold else mono)
