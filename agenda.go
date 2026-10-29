@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ type event struct {
 	End      time.Time
 	AllDay   bool
 	Location string
+	Link     string // link da chamada (Meet, Zoom, Teams), se houver
 }
 
 type agendaResult struct {
@@ -74,6 +76,7 @@ func fetchAgenda(url, email string) agendaResult {
 			Start:    e.Start.Local(),
 			AllDay:   e.RawStart.Params["VALUE"] == "DATE",
 			Location: e.Location,
+			Link:     meetingLink(e.CustomAttributes["X-GOOGLE-CONFERENCE"], e.URL, e.Location, e.Description),
 		}
 		if e.End != nil {
 			ev.End = e.End.Local()
@@ -114,6 +117,28 @@ func tidyEvents(events []event) []event {
 		}
 	}
 	return out
+}
+
+var (
+	urlRe       = regexp.MustCompile(`https://[^\s<>"']+`)
+	meetingHost = regexp.MustCompile(`^https://([a-z0-9-]+\.)*(meet\.google\.com|zoom\.us|teams\.microsoft\.com|teams\.live\.com)/`)
+)
+
+// meetingLink devolve o primeiro texto que é um link inteiro ou, dentro de
+// local e descrição, o primeiro link de Meet, Zoom ou Teams.
+func meetingLink(texts ...string) string {
+	for _, t := range texts {
+		t = strings.TrimSpace(t)
+		if urlRe.FindString(t) == t && t != "" {
+			return t
+		}
+		for _, u := range urlRe.FindAllString(t, -1) {
+			if meetingHost.MatchString(u) {
+				return u
+			}
+		}
+	}
+	return ""
 }
 
 // openICS aceita uma URL http(s) ou o caminho de um arquivo .ics local

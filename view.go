@@ -33,7 +33,10 @@ var (
 	months   = []string{"janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"}
 )
 
-const maxListItems = 6
+const (
+	maxListItems   = 6
+	maxAgendaItems = maxListItems + 2
+)
 
 func (m model) View() string {
 	if m.width == 0 {
@@ -48,19 +51,7 @@ func (m model) View() string {
 	}
 	cols, colWidth := gridLayout(m.width-4, n)
 
-	toReview, reviewTotal := m.prs.ToReview, m.prs.ToReviewTotal
-	var reviewNotes []string
-	if m.prs.TeamReview > 0 {
-		reviewNotes = append(reviewNotes, fmt.Sprintf("+%d pedidos aos seus times", m.prs.TeamReview))
-	}
-	if m.cfg.ReviewMaxAge > 0 && toReview != nil {
-		var hidden int
-		toReview, hidden = recentReviews(toReview, m.cfg.ReviewMaxAge, m.now)
-		reviewTotal = len(toReview)
-		if hidden > 0 {
-			reviewNotes = append(reviewNotes, fmt.Sprintf("ocultos: %d com mais de %s", hidden, ageLabel(m.cfg.ReviewMaxAge)))
-		}
-	}
+	toReview, reviewTotal, reviewNotes := m.reviewList()
 	reviewLine := func(p pr) string { return reviewPRLine(p, m.now) }
 	review := m.viewPRBox("Revisões pendentes", strings.Join(reviewNotes, " · "), toReview, reviewTotal, reviewLine, pink, colWidth)
 	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, prLine, green, colWidth)
@@ -73,6 +64,23 @@ func (m model) View() string {
 
 	out := lipgloss.JoinVertical(lipgloss.Left, header, "", body, "", m.viewFooter())
 	return lipgloss.NewStyle().Padding(1, 2).Render(out)
+}
+
+// reviewList aplica o REVIEW_MAX_AGE e monta as notas da caixa de revisões.
+func (m model) reviewList() (prs []pr, total int, notes []string) {
+	prs, total = m.prs.ToReview, m.prs.ToReviewTotal
+	if m.prs.TeamReview > 0 {
+		notes = append(notes, fmt.Sprintf("+%d pedidos aos seus times", m.prs.TeamReview))
+	}
+	if m.cfg.ReviewMaxAge > 0 && prs != nil {
+		var hidden int
+		prs, hidden = recentReviews(prs, m.cfg.ReviewMaxAge, m.now)
+		total = len(prs)
+		if hidden > 0 {
+			notes = append(notes, fmt.Sprintf("ocultos: %d com mais de %s", hidden, ageLabel(m.cfg.ReviewMaxAge)))
+		}
+	}
+	return prs, total, notes
 }
 
 const (
@@ -208,7 +216,7 @@ func (m model) viewPRBox(title, note string, prs []pr, total int, line func(pr) 
 			lines = append(lines, dimStyle.Render(fmt.Sprintf("+%d mais", max(total, len(prs))-maxListItems)))
 			break
 		}
-		lines = append(lines, ansi.Truncate(line(p), inner, "…"))
+		lines = append(lines, m.mark(p.URL, line(p), inner))
 	}
 
 	return strings.Join(lines, "\n")
@@ -399,7 +407,7 @@ func (m model) viewAgendaBox(width int) string {
 
 	shown := 0
 	for _, e := range m.agenda.Events {
-		if shown == maxListItems+2 {
+		if shown == maxAgendaItems {
 			lines = append(lines, dimStyle.Render("…"))
 			break
 		}
@@ -420,7 +428,14 @@ func (m model) viewAgendaBox(width int) string {
 			style = style.Foreground(yellow).Bold(true)
 		}
 		text := fmt.Sprintf("%-8s %s", when, e.Title)
-		lines = append(lines, style.Render(ansi.Truncate(text, inner, "…")))
+		if e.Link != "" {
+			text += " ↗"
+		}
+		key := ""
+		if e.Link != "" {
+			key = eventKey(e)
+		}
+		lines = append(lines, m.mark(key, style.Render(ansi.Truncate(text, inner, "…")), inner))
 	}
 
 	return strings.Join(lines, "\n")
@@ -476,7 +491,7 @@ func (m model) viewJiraBox(width int) string {
 			lines = append(lines, dimStyle.Render(more))
 			break
 		}
-		lines = append(lines, ansi.Truncate(issueLine(it), inner, "…"))
+		lines = append(lines, m.mark(issueKey(it), issueLine(it), inner))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -502,6 +517,11 @@ func (m model) viewFooter() string {
 	}
 	if !m.jira.At.IsZero() {
 		parts = append(parts, "jira às "+m.jira.At.Format("15:04"))
+	}
+	if _, i := m.selected(); i >= 0 {
+		parts = append(parts, "enter abre", "esc desmarca")
+	} else {
+		parts = append(parts, "↑↓ navega")
 	}
 	parts = append(parts, "r atualiza", "p abre revisões")
 	if m.cfg.jiraEnabled() {

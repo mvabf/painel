@@ -18,7 +18,7 @@ fictícios.
 | **Agora / próxima** | A reunião em andamento ou a próxima, com quanto tempo falta ("próxima: Daily em 12 min") |
 | **Revisões pendentes** | PRs abertos em que pediram revisão **diretamente a você**, com há quanto tempo cada um espera (o mais antigo no topo, em amarelo a partir de 1 dia e vermelho a partir de 3), e abaixo quantos pedidos foram feitos só aos seus times |
 | **Meus PRs abertos** | PRs abertos de sua autoria com o estado do CI (✓ ✗ ●), marcadores de **aprovado**, **mudanças** pedidas e **conflito**, e um resumo do que pede atenção. Rascunhos (draft) aparecem apagados |
-| **Agenda de hoje** | Eventos do dia. Os que já passaram ficam riscados, o atual fica destacado e os de dia inteiro vêm primeiro |
+| **Agenda de hoje** | Eventos do dia. Os que já passaram ficam riscados, o atual fica destacado e os de dia inteiro vêm primeiro. Reuniões com chamada (Meet, Zoom, Teams) ganham um `↗` e abrem com `enter` |
 | **Jira** (opcional) | Cards atribuídos a você e não concluídos, os em andamento primeiro e com o status ("Em revisão"…), mais o resumo "N em andamento · N a fazer" |
 
 Os números se atualizam sozinhos: PRs a cada 2 minutos e agenda a cada 5. O
@@ -140,10 +140,14 @@ Detalhes e o que funciona em cada sistema em
 
 | Tecla | Ação |
 |---|---|
+| `↑` `↓` | Seleciona um PR, card ou reunião (dá a volta no fim da lista) |
+| `tab` / `shift+tab` | Pula para a próxima caixa / a anterior |
+| `enter` | Abre o item selecionado: o PR, o card ou o link da chamada |
+| `esc` | Desmarca a seleção (sem seleção, sai) |
 | `r` | Atualiza tudo agora |
 | `p` | Abre no navegador a lista de PRs pedindo sua revisão |
 | `j` | Abre no navegador a busca do Jira (se configurado) |
-| `q`, `esc` ou `ctrl+c` | Sai |
+| `q` ou `ctrl+c` | Sai |
 
 ## Comandos
 

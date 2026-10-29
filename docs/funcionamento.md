@@ -143,6 +143,27 @@ APP-40 Tela de rastreio
 - O painel busca até 50 cards. Se houver mais, o número vira `50+`.
 - A tecla `j` abre a mesma busca no Jira, no navegador.
 
+## Navegação
+
+As setas selecionam uma linha por vez, na ordem da tela: revisões, seus PRs,
+Jira e agenda. `tab` pula direto para a primeira linha da caixa seguinte. A
+linha selecionada fica com o fundo colorido e `enter` abre no navegador:
+
+| Linha | Abre |
+|---|---|
+| PR | A página do PR no GitHub |
+| Card | `JIRA_URL/browse/CHAVE` |
+| Reunião | O link da chamada |
+
+Só entram na navegação as linhas visíveis. Na agenda, só as reuniões com link
+de chamada, marcadas com `↗`. O link vem, nesta ordem, do campo de
+videoconferência do Google, do campo URL do evento, ou do primeiro link de
+Meet, Zoom ou Teams no local ou na descrição.
+
+A seleção acompanha o item, não a posição: se a lista atualizar e o item
+continuar lá, ele segue selecionado. Se ele sumir (o PR foi mergeado, por
+exemplo), a seleção some junto.
+
 ## Quando cada coisa atualiza
 
 | O quê | Quando |

@@ -179,12 +179,20 @@ func fetchGoogleAgenda() agendaResult {
 	}
 	var body struct {
 		Items []struct {
-			Summary   string `json:"summary"`
-			Status    string `json:"status"`
-			EventType string `json:"eventType"`
-			Location  string `json:"location"`
-			Start     when   `json:"start"`
-			End       when   `json:"end"`
+			Summary     string `json:"summary"`
+			Status      string `json:"status"`
+			EventType   string `json:"eventType"`
+			Location    string `json:"location"`
+			Description string `json:"description"`
+			HangoutLink string `json:"hangoutLink"`
+			Conference  struct {
+				EntryPoints []struct {
+					Type string `json:"entryPointType"`
+					URI  string `json:"uri"`
+				} `json:"entryPoints"`
+			} `json:"conferenceData"`
+			Start     when `json:"start"`
+			End       when `json:"end"`
 			Attendees []struct {
 				Self           bool   `json:"self"`
 				ResponseStatus string `json:"responseStatus"`
@@ -211,7 +219,17 @@ func fetchGoogleAgenda() agendaResult {
 			continue
 		}
 
-		ev := event{Title: strings.TrimSpace(it.Summary), Location: it.Location}
+		var video string
+		for _, ep := range it.Conference.EntryPoints {
+			if ep.Type == "video" {
+				video = ep.URI
+			}
+		}
+		ev := event{
+			Title:    strings.TrimSpace(it.Summary),
+			Location: it.Location,
+			Link:     meetingLink(it.HangoutLink, video, it.Location, it.Description),
+		}
 		if it.Start.Date != "" {
 			ev.AllDay = true
 			ev.Start, _ = time.ParseInLocation("2006-01-02", it.Start.Date, time.Local)

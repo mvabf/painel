@@ -36,6 +36,8 @@ type model struct {
 	jiraGen     int
 
 	meetingsSent map[string]bool
+
+	selKey string // linha selecionada com as setas; vazia = nenhuma
 }
 
 func newModel(cfg config) model {
@@ -87,8 +89,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q", "esc", "ctrl+c":
+		case "q", "ctrl+c":
 			return m, tea.Quit
+		case "esc":
+			if _, i := m.selected(); i < 0 {
+				return m, tea.Quit
+			}
+			m.selKey = ""
+		case "down":
+			return m.move(1), nil
+		case "up":
+			return m.move(-1), nil
+		case "tab":
+			return m.jump(1), nil
+		case "shift+tab":
+			return m.jump(-1), nil
+		case "enter":
+			if it, i := m.selected(); i >= 0 {
+				return m, openURL(it.URL)
+			}
 		case "r":
 			// Invalida os refreshes agendados para não buscar duas vezes.
 			m.prsGen++
