@@ -143,6 +143,32 @@ APP-40 Tela de rastreio
 - O painel busca até 50 cards. Se houver mais, o número vira `50+`.
 - A tecla `j` abre a mesma busca no Jira, no navegador.
 
+### Cards ligados aos PRs
+
+Quando um PR cita a chave de um card no **título** ou na **branch**
+(`APP-24: corrige frete` ou `feature/app-24-frete`), o painel liga os dois:
+
+```
+Meus PRs abertos
+✓ api-pedidos#1287 aprovado Em revisão APP-24 Corrige frete
+
+Jira
+APP-24 Em revisão PR aprovado Corrige cálculo do frete
+```
+
+- Nas caixas de PRs, o status do card aparece em azul antes do título.
+- Na caixa do Jira, o card mostra como está o seu PR, do mais urgente para o
+  menos: `PR CI falhando`, `PR mudanças`, `PR aprovado`, `PR aberto` ou
+  `PR draft`. Com vários PRs para o mesmo card, vale o atualizado mais
+  recentemente.
+- A branch pode estar em minúsculas; o painel compara em maiúsculas.
+- Só aparecem cards que estão na sua busca do Jira. Um PR de colega ligado a
+  um card que não é seu não mostra status, e textos como `UTF-8`, que parecem
+  chave, são ignorados pelo mesmo motivo.
+
+Isso ajuda a ver o que está parado esperando o quê: um card "Em revisão" com
+`PR aprovado` provavelmente só falta mover.
+
 ## Navegação
 
 As setas selecionam uma linha por vez, na ordem da tela: revisões, seus PRs,

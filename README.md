@@ -19,7 +19,7 @@ fictícios.
 | **Revisões pendentes** | PRs abertos em que pediram revisão **diretamente a você**, com há quanto tempo cada um espera (o mais antigo no topo, em amarelo a partir de 1 dia e vermelho a partir de 3), e abaixo quantos pedidos foram feitos só aos seus times |
 | **Meus PRs abertos** | PRs abertos de sua autoria com o estado do CI (✓ ✗ ●), marcadores de **aprovado**, **mudanças** pedidas e **conflito**, e um resumo do que pede atenção. Rascunhos (draft) aparecem apagados |
 | **Agenda de hoje** | Eventos do dia. Os que já passaram ficam riscados, o atual fica destacado e os de dia inteiro vêm primeiro. Reuniões com chamada (Meet, Zoom, Teams) ganham um `↗` e abrem com `enter` |
-| **Jira** (opcional) | Cards atribuídos a você e não concluídos, os em andamento primeiro e com o status ("Em revisão"…), mais o resumo "N em andamento · N a fazer" |
+| **Jira** (opcional) | Cards atribuídos a você e não concluídos, os em andamento primeiro e com o status ("Em revisão"…), mais o resumo "N em andamento · N a fazer". Quando um PR cita o card no título ou na branch, os dois se ligam: o PR mostra o status do card e o card mostra se o PR foi aprovado, tem mudanças ou CI falhando |
 
 Os números se atualizam sozinhos: PRs a cada 2 minutos e agenda a cada 5. O
 relógio vira a cada segundo. As caixas se organizam conforme a largura do

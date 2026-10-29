@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ type pr struct {
 	IsDraft   bool
 	UpdatedAt time.Time
 	Repo      string
+	Keys      []string // chaves do Jira citadas no título ou na branch, ex.: APP-24
 
 	CI       string // "SUCCESS", "FAILURE", "ERROR", "PENDING", "EXPECTED" ou "" sem checks
 	Review   string // "APPROVED", "CHANGES_REQUESTED", "REVIEW_REQUIRED" ou ""
@@ -41,7 +43,7 @@ type prsResult struct {
 // real, mesmo quando a lista vem cortada em 50.
 const prsQuery = `
 fragment PR on PullRequest {
-  number title url isDraft updatedAt
+  number title url isDraft updatedAt headRefName
   repository { name }
   reviewDecision mergeable
   commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
@@ -72,6 +74,7 @@ type gqlPR struct {
 	URL        string    `json:"url"`
 	IsDraft    bool      `json:"isDraft"`
 	UpdatedAt  time.Time `json:"updatedAt"`
+	HeadRef    string    `json:"headRefName"`
 	Repository struct {
 		Name string `json:"name"`
 	} `json:"repository"`
@@ -161,6 +164,7 @@ func convertPRs(nodes []gqlPR, viewer string) []pr {
 			Repo:      n.Repository.Name,
 			Review:    n.ReviewDecision,
 			Conflict:  n.Mergeable == "CONFLICTING",
+			Keys:      jiraKeys(n.Title, n.HeadRef),
 		}
 		if c := n.Commits.Nodes; len(c) > 0 && c[0].Commit.StatusCheckRollup != nil {
 			p.CI = c[0].Commit.StatusCheckRollup.State
@@ -192,4 +196,21 @@ func requestedAt(n gqlPR, viewer string) time.Time {
 		return anyone
 	}
 	return n.UpdatedAt
+}
+
+var jiraKeyRe = regexp.MustCompile(`\b[A-Z][A-Z0-9]+-[0-9]+\b`)
+
+// jiraKeys acha chaves do Jira no título e na branch, que costuma vir em
+// minúsculas (app-77-corrige-frete). Chaves que não estão na busca do Jira
+// são ignoradas na tela, então um falso positivo como UTF-8 não aparece.
+func jiraKeys(title, branch string) []string {
+	var keys []string
+	seen := map[string]bool{}
+	for _, k := range jiraKeyRe.FindAllString(title+" "+strings.ToUpper(branch), -1) {
+		if !seen[k] {
+			seen[k] = true
+			keys = append(keys, k)
+		}
+	}
+	return keys
 }

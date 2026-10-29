@@ -52,9 +52,11 @@ func (m model) View() string {
 	cols, colWidth := gridLayout(m.width-4, n)
 
 	toReview, reviewTotal, reviewNotes := m.reviewList()
-	reviewLine := func(p pr) string { return reviewPRLine(p, m.now) }
+	cards := m.cardsByKey()
+	reviewLine := func(p pr) string { return reviewPRLine(p, m.now, cardFor(p, cards)) }
+	mineLine := func(p pr) string { return prLine(p, cardFor(p, cards)) }
 	review := m.viewPRBox("Revisões pendentes", strings.Join(reviewNotes, " · "), toReview, reviewTotal, reviewLine, pink, colWidth)
-	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, prLine, green, colWidth)
+	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, mineLine, green, colWidth)
 	boxes := []string{review, mine}
 	if m.cfg.jiraEnabled() {
 		boxes = append(boxes, m.viewJiraBox(colWidth))
@@ -228,8 +230,41 @@ var (
 	waitStyle = lipgloss.NewStyle().Foreground(yellow)
 )
 
-// prLine: ícone do CI, repo#número, marcadores de revisão/conflito e título.
-func prLine(p pr) string {
+func (m model) cardsByKey() map[string]issue {
+	cards := map[string]issue{}
+	for _, it := range m.jira.Issues {
+		cards[it.Key] = it
+	}
+	return cards
+}
+
+// cardFor é o primeiro card da busca do Jira citado pelo PR.
+func cardFor(p pr, cards map[string]issue) *issue {
+	for _, k := range p.Keys {
+		if it, ok := cards[k]; ok {
+			return &it
+		}
+	}
+	return nil
+}
+
+// prFor é o PR meu mais recente que cita o card.
+func prFor(it issue, prs []pr) *pr {
+	for _, p := range prs {
+		for _, k := range p.Keys {
+			if k == it.Key {
+				return &p
+			}
+		}
+	}
+	return nil
+}
+
+var cardStyle = lipgloss.NewStyle().Foreground(blue)
+
+// prLine: ícone do CI, repo#número, marcadores de revisão/conflito, status do
+// card no Jira e título.
+func prLine(p pr, card *issue) string {
 	ref := fmt.Sprintf("%s#%d", p.Repo, p.Number)
 	if p.IsDraft {
 		return dimStyle.Render("· " + ref + " [draft] " + p.Title)
@@ -256,13 +291,17 @@ func prLine(p pr) string {
 		tags = append(tags, okStyle.Render("aprovado"))
 	}
 
+	if card != nil {
+		tags = append(tags, cardStyle.Render(card.Status))
+	}
+
 	parts := append([]string{icon, dimStyle.Render(ref)}, tags...)
 	return strings.Join(append(parts, p.Title), " ")
 }
 
 // reviewPRLine mostra há quanto tempo o pedido de revisão espera: cinza até
 // 1 dia, amarelo até 3 e vermelho depois disso.
-func reviewPRLine(p pr, now time.Time) string {
+func reviewPRLine(p pr, now time.Time, card *issue) string {
 	ref := fmt.Sprintf("%s#%d", p.Repo, p.Number)
 	if p.IsDraft {
 		return dimStyle.Render(ref + " [draft] " + p.Title)
@@ -276,7 +315,11 @@ func reviewPRLine(p pr, now time.Time) string {
 	case waited >= 24*time.Hour:
 		style = waitStyle
 	}
-	return style.Render(fmt.Sprintf("%3s", shortAge(waited))) + " " + dimStyle.Render(ref) + " " + p.Title
+	line := style.Render(fmt.Sprintf("%3s", shortAge(waited))) + " " + dimStyle.Render(ref) + " "
+	if card != nil {
+		line += cardStyle.Render(card.Status) + " "
+	}
+	return line + p.Title
 }
 
 // recentReviews separa os pedidos feitos há no máximo maxAge.
@@ -491,20 +534,42 @@ func (m model) viewJiraBox(width int) string {
 			lines = append(lines, dimStyle.Render(more))
 			break
 		}
-		lines = append(lines, m.mark(issueKey(it), issueLine(it), inner))
+		lines = append(lines, m.mark(issueKey(it), issueLine(it, prFor(it, m.prs.Mine)), inner))
 	}
 	return strings.Join(lines, "\n")
 }
 
-// issueLine: chave colorida pelo andamento, status (se em andamento) e título.
-func issueLine(it issue) string {
+// issueLine: chave colorida pelo andamento, status (se em andamento), como
+// está o meu PR do card (se houver) e título.
+func issueLine(it issue, mine *pr) string {
+	var parts []string
 	switch it.Category {
 	case "indeterminate":
-		return waitStyle.Render(it.Key) + " " + dimStyle.Render(it.Status) + " " + it.Summary
+		parts = append(parts, waitStyle.Render(it.Key), dimStyle.Render(it.Status))
 	case "done":
-		return okStyle.Render(it.Key) + " " + it.Summary
+		parts = append(parts, okStyle.Render(it.Key))
+	default:
+		parts = append(parts, dimStyle.Render(it.Key))
 	}
-	return dimStyle.Render(it.Key) + " " + it.Summary
+	if mine != nil {
+		parts = append(parts, prTag(*mine))
+	}
+	return strings.Join(append(parts, it.Summary), " ")
+}
+
+// prTag resume o PR numa palavra, do mais urgente para o menos.
+func prTag(p pr) string {
+	switch {
+	case p.IsDraft:
+		return dimStyle.Render("PR draft")
+	case failing(p.CI):
+		return failStyle.Render("PR CI falhando")
+	case p.Review == "CHANGES_REQUESTED":
+		return failStyle.Render("PR mudanças")
+	case p.Review == "APPROVED":
+		return okStyle.Render("PR aprovado")
+	}
+	return cardStyle.Render("PR aberto")
 }
 
 func (m model) viewFooter() string {

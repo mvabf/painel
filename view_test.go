@@ -99,7 +99,7 @@ func TestPRLine(t *testing.T) {
 		{"draft ignora status", pr{Repo: "api", Number: 7, Title: "Título", IsDraft: true, CI: "FAILURE"}, []string{"· api#7 [draft] Título"}},
 	}
 	for _, c := range cases {
-		got := ansi.Strip(prLine(c.p))
+		got := ansi.Strip(prLine(c.p, nil))
 		if got != c.want[0] {
 			t.Errorf("%s: got %q, want %q", c.name, got, c.want[0])
 		}
@@ -145,7 +145,7 @@ func TestReviewPRLine(t *testing.T) {
 	}
 	for ago, want := range cases {
 		p.RequestedAt = now.Add(-ago)
-		if got := ansi.Strip(reviewPRLine(p, now)); got != want {
+		if got := ansi.Strip(reviewPRLine(p, now, nil)); got != want {
 			t.Errorf("pedido há %v: got %q, want %q", ago, got, want)
 		}
 	}
@@ -196,6 +196,69 @@ func TestReviewMaxAge(t *testing.T) {
 	for _, bad := range []string{"velho#1", "medio#2"} {
 		if strings.Contains(out, bad) {
 			t.Errorf("%q deveria estar oculto", bad)
+		}
+	}
+}
+
+func TestJiraKeys(t *testing.T) {
+	got := jiraKeys("APP-24: corrige frete (UTF-8)", "app-24-corrige-frete")
+	if strings.Join(got, ",") != "APP-24,UTF-8" {
+		t.Errorf("got %q", got)
+	}
+	if got := jiraKeys("ajusta layout", "feature/app-77"); strings.Join(got, ",") != "APP-77" {
+		t.Errorf("chave só na branch: got %q", got)
+	}
+	if got := jiraKeys("sem card", "main"); len(got) != 0 {
+		t.Errorf("sem chave: got %q", got)
+	}
+}
+
+func TestPRComCard(t *testing.T) {
+	card := &issue{Key: "APP-24", Status: "Em revisão", Category: "indeterminate"}
+	p := pr{Repo: "api", Number: 7, Title: "APP-24 Frete", CI: "SUCCESS", Review: "APPROVED", Keys: []string{"APP-24"}}
+	if got := ansi.Strip(prLine(p, card)); got != "✓ api#7 aprovado Em revisão APP-24 Frete" {
+		t.Errorf("prLine: got %q", got)
+	}
+	now := time.Date(2026, 10, 28, 15, 0, 0, 0, time.Local)
+	p.RequestedAt = now.Add(-time.Hour)
+	if got := ansi.Strip(reviewPRLine(p, now, card)); got != " 1h api#7 Em revisão APP-24 Frete" {
+		t.Errorf("reviewPRLine: got %q", got)
+	}
+
+	cards := map[string]issue{"APP-24": *card}
+	if cardFor(pr{Keys: []string{"UTF-8", "APP-24"}}, cards) == nil {
+		t.Error("deveria achar o card pulando a chave que não está na busca")
+	}
+	if cardFor(pr{Keys: []string{"UTF-8"}}, cards) != nil {
+		t.Error("chave fora da busca não deveria virar card")
+	}
+}
+
+func TestIssueComPR(t *testing.T) {
+	it := issue{Key: "APP-24", Summary: "Frete", Status: "Em revisão", Category: "indeterminate"}
+	mine := []pr{
+		{Number: 1, Keys: []string{"APP-9"}},
+		{Number: 2, Keys: []string{"APP-24"}, CI: "FAILURE", Review: "APPROVED"},
+	}
+	linked := prFor(it, mine)
+	if linked == nil || linked.Number != 2 {
+		t.Fatalf("PR errado: %+v", linked)
+	}
+	if got := ansi.Strip(issueLine(it, linked)); got != "APP-24 Em revisão PR CI falhando Frete" {
+		t.Errorf("CI falhando vem antes de aprovado: got %q", got)
+	}
+	if got := ansi.Strip(issueLine(it, nil)); got != "APP-24 Em revisão Frete" {
+		t.Errorf("sem PR: got %q", got)
+	}
+	cases := map[string]pr{
+		"PR aprovado": {Review: "APPROVED", CI: "SUCCESS"},
+		"PR mudanças": {Review: "CHANGES_REQUESTED"},
+		"PR aberto":   {CI: "PENDING"},
+		"PR draft":    {IsDraft: true, CI: "FAILURE"},
+	}
+	for want, p := range cases {
+		if got := ansi.Strip(prTag(p)); got != want {
+			t.Errorf("prTag(%+v) = %q, esperado %q", p, got, want)
 		}
 	}
 }
