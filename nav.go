@@ -21,7 +21,9 @@ const (
 	boxAgenda = "agenda"
 )
 
-var selStyle = lipgloss.NewStyle().Foreground(accent).Reverse(true)
+var selStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.AdaptiveColor{Light: "#FFFFFF", Dark: "#1E1E2E"}).
+	Background(accent)
 
 // items lista, na ordem da tela, as linhas visíveis que têm um link.
 func (m model) items() []item {

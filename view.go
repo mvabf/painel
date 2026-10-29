@@ -593,7 +593,7 @@ func (m model) viewFooter() string {
 		parts = append(parts, "j abre o Jira")
 	}
 	parts = append(parts, "q sai")
-	return dimStyle.Render(strings.Join(parts, " · "))
+	return strings.Join(wrapParts(strings.Join(parts, " · "), m.width-4), "\n")
 }
 
 func (m model) spinner(loading bool) string {
