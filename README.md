@@ -2,7 +2,8 @@
 
 Um dashboard pessoal para o terminal. Você digita `painel` e aparece uma tela
 que fica se atualizando sozinha com o que importa no seu dia de trabalho: PRs
-esperando a sua revisão, os seus PRs abertos, a agenda de hoje e a hora.
+esperando a sua revisão, os seus PRs abertos, a agenda de hoje, os seus
+lembretes e a hora.
 
 ![O painel rodando: relógio, PRs para revisar, meus PRs e a agenda do dia](docs/demo.gif)
 
@@ -19,6 +20,7 @@ fictícios.
 | **Revisões pendentes** | PRs abertos em que pediram revisão **diretamente a você**, com há quanto tempo cada um espera (o mais antigo no topo, em amarelo a partir de 1 dia e vermelho a partir de 3), e abaixo quantos pedidos foram feitos só aos seus times |
 | **Meus PRs abertos** | PRs abertos de sua autoria com o estado do CI (✓ ✗ ●), marcadores de **aprovado**, **mudanças** pedidas e **conflito**, e um resumo do que pede atenção. Rascunhos (draft) aparecem apagados |
 | **Agenda de hoje** | Eventos do dia. Os que já passaram ficam riscados, o atual fica destacado e os de dia inteiro vêm primeiro. Reuniões com chamada (Meet, Zoom, Teams) ganham um `↗` e abrem com `enter` |
+| **Lembretes** | Os avisos que você marca com `n` ("15:30 ligar pro fornecedor"), com quanto falta. Na hora, um balão e um alarme, mesmo com o Não perturbe ligado |
 | **Jira** (opcional) | Cards atribuídos a você e não concluídos, os em andamento primeiro e com o status ("Em revisão"…), mais o resumo "N em andamento · N a fazer". Quando um PR cita o card no título ou na branch, os dois se ligam: o PR mostra o status do card e o card mostra se o PR foi aprovado, tem mudanças ou CI falhando |
 
 Os números se atualizam sozinhos: PRs a cada 2 minutos e agenda a cada 5. O
@@ -149,14 +151,29 @@ NOTIFY_SOUND=ci,meeting   # som só para o que é urgente
 Detalhes e o que funciona em cada sistema em
 [docs/notificacoes.md](docs/notificacoes.md).
 
+## Lembretes
+
+Aperte `n` e escreva quando e o quê: `15:30 ligar pro fornecedor`,
+`+20m café` ou `amanhã 9h revisar o PR`. Na hora, o painel mostra um balão e
+toca um alarme. O lembrete fica na tela até você concluir com `x`. Também dá
+para criar pelo terminal:
+
+```sh
+painel lembrar 15:30 ligar pro fornecedor
+```
+
+Detalhes em [docs/lembretes.md](docs/lembretes.md).
+
 ## Atalhos
 
 | Tecla | Ação |
 |---|---|
-| `↑` `↓` | Seleciona um PR, card ou reunião (dá a volta no fim da lista) |
+| `↑` `↓` | Seleciona um PR, card, reunião ou lembrete (dá a volta no fim da lista) |
 | `tab` / `shift+tab` | Pula para a próxima caixa / a anterior |
 | `enter` | Abre o item selecionado: o PR, o card ou o link da chamada |
 | `esc` | Desmarca a seleção (sem seleção, sai) |
+| `n` | Cria um lembrete |
+| `x` | Conclui o lembrete selecionado |
 | `r` | Atualiza tudo agora |
 | `t` | Troca o tema |
 | `p` | Abre no navegador a lista de PRs pedindo sua revisão |
@@ -168,6 +185,7 @@ Detalhes e o que funciona em cada sistema em
 ```sh
 painel          # abre o dashboard
 painel auth     # login no Google Calendar (uma vez)
+painel lembrar 15:30 ligar pro fornecedor   # cria um lembrete (sem texto, lista)
 painel demo     # a tela com dados fictícios, sem login em nada
 painel themes   # amostra de todos os temas
 painel version  # versão instalada
@@ -231,6 +249,7 @@ A lista completa está em [docs/problemas.md](docs/problemas.md).
 | [docs/funcionamento.md](docs/funcionamento.md) | Como os números são calculados e quando atualizam |
 | [docs/notificacoes.md](docs/notificacoes.md) | Avisos no desktop e com som |
 | [docs/temas.md](docs/temas.md) | Temas prontos e como criar o seu |
+| [docs/lembretes.md](docs/lembretes.md) | Lembretes com alarme: como escrever o horário e o arquivo |
 | [docs/seguranca.md](docs/seguranca.md) | O que é guardado e quais acessos o painel tem |
 | [docs/problemas.md](docs/problemas.md) | Erros e como resolver |
 | [docs/arquitetura.md](docs/arquitetura.md) | Como o código é organizado, para quem quer contribuir |

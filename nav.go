@@ -14,13 +14,15 @@ type item struct {
 }
 
 const (
-	boxReview = "review"
-	boxMine   = "mine"
-	boxJira   = "jira"
-	boxAgenda = "agenda"
+	boxReview    = "review"
+	boxMine      = "mine"
+	boxJira      = "jira"
+	boxAgenda    = "agenda"
+	boxReminders = "lembretes"
 )
 
-// items lista, na ordem da tela, as linhas visíveis que têm um link.
+// items lista, na ordem da tela, as linhas visíveis que têm um link, mais
+// os lembretes (que se concluem com x).
 func (m model) items() []item {
 	var its []item
 	limit := m.listLimit()
@@ -52,6 +54,12 @@ func (m model) items() []item {
 		if e.Link != "" {
 			its = append(its, item{boxAgenda, eventKey(e), e.Link})
 		}
+	}
+	for i, r := range m.reminders {
+		if i == limit {
+			break
+		}
+		its = append(its, item{boxReminders, reminderKey(r), urlRe.FindString(r.Text)})
 	}
 	return its
 }

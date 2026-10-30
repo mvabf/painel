@@ -16,6 +16,9 @@ const usage = `painel: dashboard pessoal de terminal (PRs, agenda e relógio)
 uso:
   painel          abre o dashboard
   painel auth     faz login no Google Calendar (veja docs/agenda.md)
+  painel lembrar <quando> <texto>
+                  cria um lembrete (ex.: 15:30 ligar pro fornecedor, +20m café,
+                  amanhã 9h daily); sem argumentos, lista os pendentes
   painel demo     abre o dashboard com dados fictícios, sem login em nada
   painel themes   mostra os temas disponíveis (escolha com THEME= no config)
   painel help     mostra esta ajuda
@@ -30,6 +33,12 @@ func main() {
 		case "auth":
 			if err := googleAuth(); err != nil {
 				fmt.Fprintln(os.Stderr, "painel auth:", err)
+				os.Exit(1)
+			}
+			return
+		case "lembrar", "lembrete", "lembretes":
+			if err := addReminderCLI(os.Args[2:]); err != nil {
+				fmt.Fprintln(os.Stderr, "painel lembrar:", err)
 				os.Exit(1)
 			}
 			return

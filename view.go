@@ -31,9 +31,9 @@ func (m model) View() string {
 
 func (m model) boxCount() int {
 	if m.cfg.jiraEnabled() {
-		return 4
+		return 5
 	}
-	return 3
+	return 4
 }
 
 // viewBody monta a grade de caixas, cada lista com até limit itens.
@@ -50,7 +50,7 @@ func (m model) viewBody(limit int) string {
 	if m.cfg.jiraEnabled() {
 		boxes = append(boxes, m.viewJiraBox(colWidth, limit))
 	}
-	boxes = append(boxes, m.viewAgendaBox(colWidth, limit))
+	boxes = append(boxes, m.viewAgendaBox(colWidth, limit), m.viewRemindersBox(colWidth, limit))
 	return renderGrid(boxes, cols, colWidth)
 }
 
@@ -665,7 +665,13 @@ func prTag(p pr) string {
 }
 
 func (m model) viewFooter() string {
+	if m.typing {
+		return m.viewReminderInput()
+	}
 	parts := []string{}
+	if m.inputErr != "" {
+		parts = append(parts, errStyle.Render(m.inputErr))
+	}
 	if m.demo {
 		parts = append(parts, waitStyle.Render("demo com dados fictícios"))
 	}
@@ -678,12 +684,15 @@ func (m model) viewFooter() string {
 	if !m.jira.At.IsZero() {
 		parts = append(parts, "jira às "+m.jira.At.Format("15:04"))
 	}
-	if m.selKey != "" {
+	switch {
+	case strings.HasPrefix(m.selKey, "lembrete:"):
+		parts = append(parts, "x conclui", "esc desmarca")
+	case m.selKey != "":
 		parts = append(parts, "enter abre", "esc desmarca")
-	} else {
+	default:
 		parts = append(parts, "↑↓ navega")
 	}
-	parts = append(parts, "r atualiza", "t tema: "+m.themeLabel(), "p abre revisões")
+	parts = append(parts, "n lembrete", "r atualiza", "t tema: "+m.themeLabel(), "p abre revisões")
 	if m.cfg.jiraEnabled() {
 		parts = append(parts, "j abre o Jira")
 	}

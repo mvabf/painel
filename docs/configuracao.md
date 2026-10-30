@@ -131,8 +131,9 @@ Além do `config`, o painel usa estes arquivos em `~/.config/painel/`:
 | `google-client.json` | você, baixando do Google Cloud | Identifica o "app" no login do Google |
 | `google-token.json` | `painel auth` | Seu login no Google Calendar |
 | `themes/<nome>` | você | Temas próprios (veja [temas.md](temas.md)) |
+| `lembretes` | tecla `n` ou `painel lembrar` | Seus lembretes, um por linha (veja [lembretes.md](lembretes.md)) |
 
-Os dois são credenciais. Veja [seguranca.md](seguranca.md).
+Os dois do Google são credenciais. Veja [seguranca.md](seguranca.md).
 
 ## O que não é configurável (ainda)
 

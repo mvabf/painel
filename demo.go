@@ -86,5 +86,10 @@ func demoModel(now time.Time, loaded bool) model {
 		withLink(ev(15, 0, 45, "Pareamento com o time")),
 		withLink(ev(17, 30, 30, "1:1 com a liderança")),
 	}}
+	m.reminders = []reminder{
+		{At: at(14, 45), Text: "Responder o fornecedor", Fired: true},
+		{At: at(15, 20), Text: "Subir a versão do checkout"},
+		{At: at(9, 0).AddDate(0, 0, 1), Text: "Revisar a apresentação da sprint"},
+	}
 	return m
 }

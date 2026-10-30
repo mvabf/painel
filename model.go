@@ -40,12 +40,23 @@ type model struct {
 
 	selKey string // linha selecionada com as setas; vazia = nenhuma
 	theme  string
+
+	reminders     []reminder
+	remindersFile string // vazio = não salva (demo e testes)
+	remindersMod  time.Time
+	typing        bool // campo de novo lembrete aberto no rodapé
+	input         string
+	inputErr      string
 }
 
 func newModel(cfg config) model {
 	t := loadTheme(cfg.Theme)
 	applyTheme(t)
+	path := remindersPath()
 	return model{
+		reminders:     loadReminders(path),
+		remindersFile: path,
+		remindersMod:  modTime(path),
 		theme:         t.Name,
 		cfg:           cfg,
 		now:           time.Now(),
@@ -96,6 +107,9 @@ func (m model) loadJira() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.typing {
+			return m.typeReminder(msg), nil
+		}
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
@@ -113,7 +127,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "shift+tab":
 			return m.jump(-1), nil
 		case "enter":
-			if it, i := m.selected(); i >= 0 && !m.demo {
+			if it, i := m.selected(); i >= 0 && it.URL != "" && !m.demo {
 				return m, openURL(it.URL)
 			}
 		case "r":
@@ -128,6 +142,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.agendaLoading = m.cfg.Agenda != ""
 			m.jiraLoading = m.cfg.jiraEnabled()
 			return m, tea.Batch(m.loadPRs(), m.loadAgenda(), m.loadJira())
+		case "n":
+			m.typing, m.input, m.inputErr = true, "", ""
+		case "x":
+			if it, i := m.selected(); i >= 0 && it.Box == boxReminders {
+				m = m.removeReminder(it.Key)
+			}
 		case "t":
 			t := loadTheme(nextTheme(m.theme))
 			applyTheme(t)
@@ -149,7 +169,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.cfg.Notify[evMeeting] && m.meetingsSent != nil {
 			notes = meetingNotices(m.agenda.Events, m.now, m.cfg.NotifyBefore, m.meetingsSent)
 		}
-		return m, tea.Batch(tick(), m.notify(notes))
+		m = m.reloadReminders()
+		var alarms tea.Cmd
+		if due := dueReminders(m.reminders, m.now); len(due) > 0 && !m.demo {
+			m.persistReminders()
+			alarms = reminderAlarms(due)
+		}
+		return m, tea.Batch(tick(), m.notify(notes), alarms)
 
 	case prsMsg:
 		m.prsLoading = false

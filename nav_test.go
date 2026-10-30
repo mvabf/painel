@@ -36,6 +36,8 @@ func press(m model, keys ...string) (model, tea.Cmd) {
 			msg = tea.KeyMsg{Type: tea.KeyEnter}
 		case "esc":
 			msg = tea.KeyMsg{Type: tea.KeyEsc}
+		case "backspace":
+			msg = tea.KeyMsg{Type: tea.KeyBackspace}
 		}
 		var next tea.Model
 		next, cmd = m.Update(msg)

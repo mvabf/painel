@@ -46,8 +46,9 @@ silencioso para o resto.
 | macOS | `osascript` (já vem no sistema) | Som "Glass". Na primeira vez, o macOS pode pedir para permitir notificações do Script Editor |
 | Windows | Ainda não avisa | — |
 
-Se o modo **Não perturbe** do sistema estiver ligado, nem o balão nem o som
-aparecem.
+Se o modo **Não perturbe** do sistema estiver ligado, o balão vai direto para
+a central de notificações e o som não toca. A exceção são os
+[lembretes](lembretes.md), que tocam o alarme por fora.
 
 ## Privacidade
 

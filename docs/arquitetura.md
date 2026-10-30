@@ -9,7 +9,7 @@ estado em texto.
 ## Mapa dos arquivos
 
 ```
-main.go         entrada: subcomandos (auth, version, help) e início do programa
+main.go         entrada: subcomandos (auth, lembrar, demo, themes, version, help) e início do programa
 config.go       leitura de ~/.config/painel/config e das variáveis PAINEL_*
 model.go        estado, mensagens e Update: relógio, ciclos de busca, teclas
 view.go         View: layout, caixas, cores e textos
@@ -22,11 +22,13 @@ google.go       login OAuth (`painel auth`) e agenda via Google Calendar API
 jira.go         cards do Jira Cloud (busca JQL)
 nav.go          seleção com as setas: itens da tela, movimento e destaque
 notify.go       notificações no desktop: o que mudou entre duas buscas e o envio
+reminders.go    lembretes: arquivo, horários escritos à mão, alarme, caixa e campo
 view_test.go    testes de renderização com dados falsos
 agenda_test.go  testes do iCal: recorrências, remarcações, recusados, repetidos
 nav_test.go     testes das teclas de navegação e dos links de reunião
 theme_test.go   testes dos temas, do arquivo de tema e da tecla t
 notify_test.go  testes de quando cada aviso dispara
+reminders_test.go  testes dos horários, do arquivo, do alarme e das teclas n e x
 demo_test.go    gera os quadros do GIF do README (só com PAINEL_DEMO_DIR) e testa a demo
 scripts/demo_gif.py       desenha os quadros em docs/demo.gif
 .devcontainer/            imagem de desenvolvimento (Dev Container, Codespaces e make docker-*)

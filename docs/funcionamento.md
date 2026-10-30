@@ -243,8 +243,9 @@ aparecem. No sábado e no domingo, a linha dá lugar a "fim de semana 🎉".
 - Cada caixa precisa de pelo menos 34 colunas. O painel coloca lado a lado
   quantas couberem e equilibra as linhas. Com o Jira, por exemplo, 4 caixas
   que não cabem numa linha viram 2×2 em vez de 3+1.
-- Sem o Jira (3 caixas): uma linha a partir de ~110 colunas e duas linhas a
-  partir de ~74. Com o Jira (4 caixas): uma linha a partir de ~146 colunas.
+- Sem o Jira (4 caixas): uma linha a partir de ~146 colunas e duas linhas a
+  partir de ~74. Com o Jira (5 caixas): uma linha a partir de ~182 colunas e
+  3+2 a partir de ~110.
 - Num terminal mais estreito que isso, as caixas ficam empilhadas.
 - As caixas de uma mesma linha têm a mesma altura.
 - O número de itens em cada lista acompanha a **altura** do terminal: com a
