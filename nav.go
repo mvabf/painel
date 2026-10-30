@@ -25,7 +25,7 @@ const (
 // os lembretes (que se concluem com x).
 func (m model) items() []item {
 	var its []item
-	limit := m.listLimit()
+	lay, limit := m.plan()
 	review, _, _ := m.reviewList()
 	for i, p := range review {
 		if i == limit {
@@ -61,7 +61,28 @@ func (m model) items() []item {
 		}
 		its = append(its, item{boxReminders, reminderKey(r), urlRe.FindString(r.Text)})
 	}
+	if lay.tabs {
+		active := m.activeTab()
+		var shown []item
+		for _, it := range its {
+			if it.Box == active {
+				shown = append(shown, it)
+			}
+		}
+		return shown
+	}
 	return its
+}
+
+// nextBox é o tab: no modo de abas troca a caixa visível; senão pula a
+// seleção para a próxima caixa.
+func (m model) nextBox(dir int) model {
+	if lay, _ := m.plan(); lay.tabs {
+		m.tab = (m.tab + dir + m.boxCount()) % m.boxCount()
+		m.selKey = ""
+		return m
+	}
+	return m.jump(dir)
 }
 
 func issueKey(it issue) string { return "jira:" + it.Key }

@@ -169,7 +169,7 @@ Detalhes em [docs/lembretes.md](docs/lembretes.md).
 | Tecla | Ação |
 |---|---|
 | `↑` `↓` | Seleciona um PR, card, reunião ou lembrete (dá a volta no fim da lista) |
-| `tab` / `shift+tab` | Pula para a próxima caixa / a anterior |
+| `tab` / `shift+tab` | Pula para a próxima caixa / a anterior (num terminal pequeno, troca a caixa visível; `→` e `←` também) |
 | `enter` | Abre o item selecionado: o PR, o card ou o link da chamada |
 | `esc` | Desmarca a seleção (sem seleção, sai) |
 | `n` | Cria um lembrete |

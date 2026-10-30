@@ -294,8 +294,8 @@ func TestListaAcompanhaAltura(t *testing.T) {
 		t.Errorf("com 60 linhas deveriam caber bem mais que 6 itens, veio %d", got)
 	}
 	m.height = 10
-	if got := m.listLimit(); got != minListItems {
-		t.Errorf("num terminal baixo deveria ficar no mínimo %d, veio %d", minListItems, got)
+	if got := lipgloss.Height(m.View()); got > 10 {
+		t.Errorf("num terminal baixo a tela deveria compactar até caber, ficou com %d linhas", got)
 	}
 }
 

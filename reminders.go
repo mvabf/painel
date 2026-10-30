@@ -339,10 +339,10 @@ func (m model) viewRemindersBox(width, limit int) string {
 		}
 	}
 	lines := []string{titleStyle.Render(fmt.Sprint(len(m.reminders))) + " Lembretes"}
-	if fired > 0 {
+	if fired > 0 && !m.lay.noSummary {
 		lines = append(lines, failStyle.Render(fmt.Sprintf("%d na hora · x conclui", fired)))
 	}
-	lines = append(lines, "")
+	lines = m.gap(lines)
 	if len(m.reminders) == 0 {
 		lines = append(lines, dimStyle.Render(ansi.Wrap("nenhum lembrete · aperte n para criar", inner, "")))
 	}

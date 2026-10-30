@@ -20,59 +20,6 @@ const (
 	maxFetched   = 50 // o tamanho das buscas; não adianta pedir mais
 )
 
-func (m model) View() string {
-	if m.width == 0 {
-		return ""
-	}
-	body := m.viewBody(m.listLimit())
-	out := lipgloss.JoinVertical(lipgloss.Left, m.viewHeader(), "", body, "", m.viewFooter())
-	return lipgloss.NewStyle().Padding(1, 2).Render(out)
-}
-
-func (m model) boxCount() int {
-	if m.cfg.jiraEnabled() {
-		return 5
-	}
-	return 4
-}
-
-// viewBody monta a grade de caixas, cada lista com até limit itens.
-func (m model) viewBody(limit int) string {
-	cols, colWidth := gridLayout(m.width-4, m.boxCount())
-
-	toReview, reviewTotal, reviewNotes := m.reviewList()
-	cards := m.cardsByKey()
-	reviewLine := func(p pr) string { return reviewPRLine(p, m.now, cardFor(p, cards)) }
-	mineLine := func(p pr) string { return prLine(p, cardFor(p, cards)) }
-	review := m.viewPRBox("Revisões pendentes", strings.Join(reviewNotes, " · "), toReview, reviewTotal, reviewLine, pink, colWidth, limit)
-	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, mineLine, green, colWidth, limit)
-	boxes := []string{review, mine}
-	if m.cfg.jiraEnabled() {
-		boxes = append(boxes, m.viewJiraBox(colWidth, limit))
-	}
-	boxes = append(boxes, m.viewAgendaBox(colWidth, limit), m.viewRemindersBox(colWidth, limit))
-	return renderGrid(boxes, cols, colWidth)
-}
-
-// listLimit diz quantos itens cabem em cada lista na altura do terminal:
-// mede a tela com o padrão de 6, distribui a sobra entre as linhas da
-// grade e confere se coube. Nunca fica abaixo de minListItems.
-func (m model) listLimit() int {
-	if m.height == 0 {
-		return maxListItems
-	}
-	fixed := 2 + lipgloss.Height(m.viewHeader()) + 2 + lipgloss.Height(m.viewFooter())
-	cols, _ := gridLayout(m.width-4, m.boxCount())
-	rows := (m.boxCount() + cols - 1) / cols
-
-	slack := m.height - fixed - lipgloss.Height(m.viewBody(maxListItems))
-	limit := max(minListItems, min(maxFetched, maxListItems+slack/rows))
-	for limit > minListItems && fixed+lipgloss.Height(m.viewBody(limit)) > m.height {
-		limit--
-	}
-	return limit
-}
-
 // reviewList aplica o REVIEW_MAX_AGE e monta as notas da caixa de revisões.
 func (m model) reviewList() (prs []pr, total int, notes []string) {
 	prs, total = m.prs.ToReview, m.prs.ToReviewTotal
@@ -88,53 +35,6 @@ func (m model) reviewList() (prs []pr, total int, notes []string) {
 		}
 	}
 	return prs, total, notes
-}
-
-const (
-	minBoxWidth = 34
-	boxGap      = 2
-)
-
-// gridLayout escolhe quantas caixas por linha cabem em width e equilibra as
-// linhas: 4 caixas que não cabem lado a lado viram 2×2, e não 3+1.
-func gridLayout(width, n int) (cols, colWidth int) {
-	cols = max(1, min(n, (width+boxGap)/(minBoxWidth+boxGap)))
-	rows := (n + cols - 1) / cols
-	cols = (n + rows - 1) / rows
-	return cols, (width - boxGap*(cols-1)) / cols
-}
-
-// renderGrid aplica a borda e monta as linhas, com a mesma altura dentro de
-// cada linha.
-func renderGrid(contents []string, cols, colWidth int) string {
-	var rows []string
-	for start := 0; start < len(contents); start += cols {
-		row := contents[start:min(start+cols, len(contents))]
-		h := 0
-		for _, c := range row {
-			h = max(h, lipgloss.Height(c))
-		}
-		box := boxStyle.Width(colWidth - 2)
-		if cols > 1 {
-			box = box.Height(h)
-		}
-		var parts []string
-		for i, c := range row {
-			if i > 0 {
-				parts = append(parts, strings.Repeat(" ", boxGap))
-			}
-			parts = append(parts, box.Render(c))
-		}
-		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Top, parts...))
-	}
-	return lipgloss.JoinVertical(lipgloss.Left, rows...)
-}
-
-// timelineWidth usa o espaço à direita do relógio, sem exagerar em
-// monitores muito largos.
-func timelineWidth(screen, clock int) int {
-	free := screen - 4 - clock - 5 - len("expediente ") - len(" 100%")
-	return max(20, min(108, free))
 }
 
 // agendaLimit: a agenda não tem linha de resumo, então cabem dois a mais.
@@ -159,16 +59,62 @@ func (m model) viewHeader() string {
 
 	date := fmt.Sprintf("%s, %d de %s", weekdays[now.Weekday()], now.Day(), months[now.Month()-1])
 
-	info := append([]string{
-		greetStyle.Render(greeting),
-		dimStyle.Render(date),
-		"",
-	}, m.viewDayProgress(timelineWidth(m.width, lipgloss.Width(clock)))...)
-	if next := m.viewNextEvent(); next != "" {
-		info = append(info, next)
+	width := m.width - 4
+	if m.lay.smallClock || width < lipgloss.Width(clock)+5+max(len(greeting), len(date)) {
+		return m.viewSmallHeader(greeting)
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, clock, "     ", lipgloss.JoinVertical(lipgloss.Left, info...))
+	info := []string{greetStyle.Render(greeting), dimStyle.Render(date)}
+	next := m.viewNextEvent()
+	if free := width - lipgloss.Width(clock) - 5 - timelineExtra; free >= minTimeline {
+		info = append(append(info, ""), m.viewDayProgress(min(maxTimeline, free))...)
+		if next != "" {
+			info = append(info, next)
+		}
+		return lipgloss.JoinHorizontal(lipgloss.Top, clock, "     ", lipgloss.JoinVertical(lipgloss.Left, info...))
+	}
+
+	// Estreito: a linha do tempo desce para baixo do relógio.
+	if next != "" {
+		info = append(info, "", ansi.Truncate(next, width-lipgloss.Width(clock)-5, "…"))
+	}
+	top := lipgloss.JoinHorizontal(lipgloss.Top, clock, "     ", lipgloss.JoinVertical(lipgloss.Left, info...))
+	return lipgloss.JoinVertical(lipgloss.Left, append([]string{top, ""}, m.viewDayProgress(timelineFor(width))...)...)
+}
+
+// viewSmallHeader é o cabeçalho de quando falta espaço: hora, saudação, data
+// e a próxima reunião numa linha e a linha do tempo, sem as horas, na outra.
+// Se a primeira linha não couber, saem a data e depois a saudação.
+func (m model) viewSmallHeader(greeting string) string {
+	now := m.now
+	width := m.width - 4
+	day := strings.Split(weekdays[now.Weekday()], "-")[0]
+	clock := clockStyle.Bold(true).Render(now.Format("15:04:05"))
+	parts := []string{greetStyle.Render(greeting), dimStyle.Render(fmt.Sprintf("%s, %02d/%02d", day, now.Day(), now.Month()))}
+	if next := m.viewNextEvent(); next != "" {
+		parts = append(parts, next)
+	}
+	line := clock + "  " + strings.Join(parts, dimStyle.Render(" · "))
+	for _, drop := range []int{1, 0} {
+		if lipgloss.Width(line) <= width || drop >= len(parts) {
+			break
+		}
+		parts = append(parts[:drop], parts[drop+1:]...)
+		line = clock + "  " + strings.Join(parts, dimStyle.Render(" · "))
+	}
+	progress := m.viewDayProgress(timelineFor(width))
+	return lipgloss.JoinVertical(lipgloss.Left, ansi.Truncate(line, width, "…"), progress[len(progress)-1])
+}
+
+const (
+	minTimeline   = 20
+	maxTimeline   = 108
+	timelineExtra = len("expediente ") + len(" 100%")
+)
+
+// timelineFor é a largura da linha do tempo quando ela tem a linha toda.
+func timelineFor(width int) int {
+	return max(10, min(maxTimeline, width-timelineExtra))
 }
 
 // viewDayProgress mostra o expediente (9h–18h) como uma linha do tempo: o
@@ -301,10 +247,10 @@ func (m model) viewPRBox(title, note string, prs []pr, total int, line func(pr) 
 		count = fmt.Sprint(max(total, len(prs)))
 	}
 	lines = append(lines, titleStyle.Render(count)+" "+title+m.spinner(m.prsLoading))
-	if note != "" {
+	if note != "" && !m.lay.noSummary {
 		lines = append(lines, wrapParts(note, inner)...)
 	}
-	lines = append(lines, "")
+	lines = m.gap(lines)
 
 	if m.prs.Err != nil {
 		lines = append(lines, errStyle.Render(ansi.Truncate(m.prs.Err.Error(), inner, "…")))
@@ -532,7 +478,7 @@ func (m model) viewAgendaBox(width, limit int) string {
 	if !m.agenda.At.IsZero() { // já houve uma busca
 		count = fmt.Sprint(len(m.agenda.Events))
 	}
-	lines := []string{titleStyle.Render(count) + " Agenda de hoje" + m.spinner(m.agendaLoading), ""}
+	lines := m.gap([]string{titleStyle.Render(count) + " Agenda de hoje" + m.spinner(m.agendaLoading)})
 	if m.agenda.Err != nil {
 		lines = append(lines, errStyle.Render(ansi.Truncate(m.agenda.Err.Error(), inner, "…")))
 	}
@@ -605,10 +551,10 @@ func (m model) viewJiraBox(width, limit int) string {
 	if todo > 0 {
 		summary = append(summary, fmt.Sprintf("%d a fazer", todo))
 	}
-	if len(summary) > 0 {
+	if len(summary) > 0 && !m.lay.noSummary {
 		lines = append(lines, wrapParts(strings.Join(summary, " · "), inner)...)
 	}
-	lines = append(lines, "")
+	lines = m.gap(lines)
 
 	if m.jira.Err != nil {
 		lines = append(lines, errStyle.Render(ansi.Truncate(m.jira.Err.Error(), inner, "…")))
@@ -675,14 +621,17 @@ func (m model) viewFooter() string {
 	if m.demo {
 		parts = append(parts, waitStyle.Render("demo com dados fictícios"))
 	}
-	if !m.prs.At.IsZero() {
-		parts = append(parts, "PRs às "+m.prs.At.Format("15:04"))
-	}
-	if !m.agenda.At.IsZero() {
-		parts = append(parts, "agenda às "+m.agenda.At.Format("15:04"))
-	}
-	if !m.jira.At.IsZero() {
-		parts = append(parts, "jira às "+m.jira.At.Format("15:04"))
+	// Com pouco espaço, os horários das buscas saem antes dos atalhos.
+	if !m.lay.smallClock {
+		if !m.prs.At.IsZero() {
+			parts = append(parts, "PRs às "+m.prs.At.Format("15:04"))
+		}
+		if !m.agenda.At.IsZero() {
+			parts = append(parts, "agenda às "+m.agenda.At.Format("15:04"))
+		}
+		if !m.jira.At.IsZero() {
+			parts = append(parts, "jira às "+m.jira.At.Format("15:04"))
+		}
 	}
 	switch {
 	case strings.HasPrefix(m.selKey, "lembrete:"):
@@ -691,6 +640,9 @@ func (m model) viewFooter() string {
 		parts = append(parts, "enter abre", "esc desmarca")
 	default:
 		parts = append(parts, "↑↓ navega")
+	}
+	if m.lay.tabs {
+		parts = append(parts, "tab troca de caixa")
 	}
 	parts = append(parts, "n lembrete", "r atualiza", "t tema: "+m.themeLabel(), "p abre revisões")
 	if m.cfg.jiraEnabled() {

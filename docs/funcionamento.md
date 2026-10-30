@@ -244,14 +244,41 @@ aparecem. No sábado e no domingo, a linha dá lugar a "fim de semana 🎉".
   quantas couberem e equilibra as linhas. Com o Jira, por exemplo, 4 caixas
   que não cabem numa linha viram 2×2 em vez de 3+1.
 - Sem o Jira (4 caixas): uma linha a partir de ~146 colunas e duas linhas a
-  partir de ~74. Com o Jira (5 caixas): uma linha a partir de ~182 colunas e
-  3+2 a partir de ~110.
-- Num terminal mais estreito que isso, as caixas ficam empilhadas.
-- As caixas de uma mesma linha têm a mesma altura.
+  partir de ~74. Com o Jira (5 caixas): uma linha a partir de ~182 colunas,
+  3+2 a partir de ~110 e 2+2+1 a partir de ~74.
+- Num terminal mais estreito que isso, as caixas ficam empilhadas (ou em
+  abas, se não couberem na altura).
+- As caixas de uma mesma linha têm a mesma altura. Se a última linha tem
+  menos caixas que as outras (a 5ª caixa num terminal de 2 colunas, por
+  exemplo), elas se esticam até a largura toda.
 - O número de itens em cada lista acompanha a **altura** do terminal: com a
   janela maximizada, cabem bem mais que os 6 de um terminal de 30 linhas, e o
-  resto vira "+N mais". Num terminal baixo, cada lista mostra pelo menos 3. A
-  agenda, que não tem linha de resumo, mostra 2 a mais que as outras caixas.
+  resto vira "+N mais". A agenda, que não tem linha de resumo, mostra 2 a mais
+  que as outras caixas.
+
+### Terminal pequeno
+
+A tela nunca passa do tamanho do terminal e o rodapé com os atalhos nunca
+some. Quando falta altura, o painel compacta aos poucos, e cada passo só
+entra se o anterior não bastou:
+
+1. Tira as linhas em branco entre o cabeçalho, as caixas e o rodapé.
+2. Troca o relógio grande por uma linha só (`15:00:10  Boa tarde, Ana ·
+   quarta, 28/10 · agora: Daily`), com a linha do tempo, sem as horas,
+   embaixo. Os horários das últimas buscas saem do rodapé.
+3. Tira as linhas de resumo das caixas ("2 em andamento · 2 a fazer"…).
+4. Baixa as listas de 3 para 2 itens.
+5. Mostra **uma caixa por vez**, com uma linha de abas em cima
+   (`Revisões · Meus PRs · Jira · Agenda · Lembretes`). `tab` ou `→` vai para
+   a próxima caixa, `shift+tab` ou `←` volta, e as setas `↑↓` andam pelos
+   itens da caixa visível.
+
+Na largura, o cabeçalho também se ajusta: sem espaço para a linha do tempo ao
+lado do relógio, ela desce para baixo dele; sem espaço nem para a saudação, o
+relógio vira a versão de uma linha. Na linha do relógio pequeno, saem primeiro
+a data e depois a saudação, e a próxima reunião fica.
+
+Ao redimensionar a janela, o painel recalcula tudo na hora.
 - Títulos longos são cortados com `…` para não quebrar o layout.
 - O painel usa a tela alternativa do terminal: ao sair, seu terminal volta
   exatamente como estava.

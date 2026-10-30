@@ -41,6 +41,9 @@ type model struct {
 	selKey string // linha selecionada com as setas; vazia = nenhuma
 	theme  string
 
+	lay layout // compactação da tela; vale só durante View
+	tab int    // caixa visível no modo de abas
+
 	reminders     []reminder
 	remindersFile string // vazio = não salva (demo e testes)
 	remindersMod  time.Time
@@ -122,10 +125,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.move(1), nil
 		case "up":
 			return m.move(-1), nil
-		case "tab":
-			return m.jump(1), nil
-		case "shift+tab":
-			return m.jump(-1), nil
+		case "tab", "right":
+			return m.nextBox(1), nil
+		case "shift+tab", "left":
+			return m.nextBox(-1), nil
 		case "enter":
 			if it, i := m.selected(); i >= 0 && it.URL != "" && !m.demo {
 				return m, openURL(it.URL)

@@ -12,7 +12,8 @@ estado em texto.
 main.go         entrada: subcomandos (auth, lembrar, demo, themes, version, help) e início do programa
 config.go       leitura de ~/.config/painel/config e das variáveis PAINEL_*
 model.go        estado, mensagens e Update: relógio, ciclos de busca, teclas
-view.go         View: layout, caixas, cores e textos
+layout.go       View e responsividade: escolhe o quanto compactar, monta a grade e as abas
+view.go         cabeçalho, caixas, rodapé e textos
 bigclock.go     fontes de 5 linhas do relógio grande
 theme.go        temas: cores, bordas, fonte do relógio e temas de arquivo
 demo.go         dados fictícios do `painel demo` e do GIF do README
@@ -24,6 +25,7 @@ nav.go          seleção com as setas: itens da tela, movimento e destaque
 notify.go       notificações no desktop: o que mudou entre duas buscas e o envio
 reminders.go    lembretes: arquivo, horários escritos à mão, alarme, caixa e campo
 view_test.go    testes de renderização com dados falsos
+layout_test.go  testes de tamanho: a tela cabe em qualquer terminal, compactação e abas
 agenda_test.go  testes do iCal: recorrências, remarcações, recusados, repetidos
 nav_test.go     testes das teclas de navegação e dos links de reunião
 theme_test.go   testes dos temas, do arquivo de tema e da tecla t
@@ -118,9 +120,12 @@ nova, por exemplo erros do Bugsnag:
    - trate `bugsnagMsg` (guardar, manter os dados antigos em caso de erro,
      agendar o próximo ciclo) e `refreshBugsnagMsg` (conferir a geração).
 
-4. **Tela** (`view.go`): crie `viewBugsnagBox(width int) string`, que devolve
-   só o **conteúdo**. Adicione-a à lista `boxes` em `View` e conte-a em `n`.
-   `gridLayout` e `renderGrid` cuidam de bordas, alturas e da grade.
+4. **Tela**: crie `viewBugsnagBox(width, limit int) string`, que devolve só o
+   **conteúdo**, com no máximo `limit` itens. Pule as linhas de resumo quando
+   `m.lay.noSummary` estiver ligado e use `m.gap` para a linha em branco
+   abaixo do título. Em `layout.go`, adicione a caixa em `boxKeys`,
+   `boxTitles` e `viewBox`. A grade, as bordas, as alturas, a compactação e
+   as abas vêm de graça.
 
 5. **Testes**: um `httptest.Server` para a fonte (veja `jira_test.go`) e dados
    falsos em `view_test.go` conferindo o texto na tela.
