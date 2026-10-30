@@ -74,6 +74,24 @@ def parse(text):
     return lines
 
 
+# Traços de cada caractere de borda: (cima, baixo, esquerda, direita), com
+# peso 1 (fino), 3 (grosso) ou "d" (duplo).
+SEGMENTS = {
+    "─": (0, 0, 1, 1), "│": (1, 1, 0, 0),
+    "┌": (0, 1, 0, 1), "┐": (0, 1, 1, 0), "└": (1, 0, 0, 1), "┘": (1, 0, 1, 0),
+    "━": (0, 0, 3, 3), "┃": (3, 3, 0, 0),
+    "┏": (0, 3, 0, 3), "┓": (0, 3, 3, 0), "┗": (3, 0, 0, 3), "┛": (3, 0, 3, 0),
+    "┣": (3, 3, 0, 3), "┫": (3, 3, 3, 0),
+    "╻": (0, 3, 0, 0), "╹": (3, 0, 0, 0), "╺": (0, 0, 0, 3), "╸": (0, 0, 3, 0),
+    "═": (0, 0, "d", "d"), "║": ("d", "d", 0, 0),
+    "╔": (0, "d", 0, "d"), "╗": (0, "d", "d", 0), "╚": ("d", 0, 0, "d"), "╝": ("d", 0, "d", 0),
+}
+
+
+def blend(color, amount):
+    return tuple(round(c * amount + b * (1 - amount)) for c, b in zip(color, BG))
+
+
 def draw_box_char(d, ch, x, y, color):
     """Desenha blocos e bordas como formas para não ficar fresta entre linhas."""
     w, h = CELL_W, LINE_HEIGHT
@@ -81,12 +99,37 @@ def draw_box_char(d, ch, x, y, color):
     r = 5
     if ch == "█":
         d.rectangle([x, y, x + w - 1, y + h - 1], fill=color)
-    elif ch == "│":
-        d.line([cx, y, cx, y + h], fill=color)
-    elif ch == "─":
-        d.line([x, cy, x + w, cy], fill=color)
-    elif ch == "━":
-        d.rectangle([x, cy - 1, x + w - 1, cy + 1], fill=color)
+    elif ch == "▓":
+        d.rectangle([x, y, x + w - 1, y + h - 1], fill=blend(color, 0.7))
+    elif ch in "╔╗╚╝":
+        dx = 1 if ch in "╔╚" else -1
+        dy = 1 if ch in "╔╗" else -1
+        x_edge = x + w if dx > 0 else x
+        y_edge = y + h if dy > 0 else y
+        for off in (-2, 2):
+            vx, hy = cx + off * dx, cy + off * dy
+            d.line([vx, hy, vx, y_edge], fill=color)
+            d.line([vx, hy, x_edge, hy], fill=color)
+    elif ch in SEGMENTS:
+        up, down, left, right = SEGMENTS[ch]
+        for weight, (x0, y0, x1, y1) in (
+            (up, (cx, y, cx, cy)), (down, (cx, cy, cx, y + h)),
+            (left, (x, cy, cx, cy)), (right, (cx, cy, x + w, cy)),
+        ):
+            vertical = x0 == x1
+            if weight == 1:
+                d.line([x0, y0, x1, y1], fill=color)
+            elif weight == 3:
+                if vertical:
+                    d.rectangle([x0 - 1, y0, x0 + 1, y1], fill=color)
+                else:
+                    d.rectangle([x0, y0 - 1, x1, y0 + 1], fill=color)
+            elif weight == "d":
+                for off in (-2, 2):
+                    if vertical:
+                        d.line([x0 + off, y0, x1 + off, y1], fill=color)
+                    else:
+                        d.line([x0, y0 + off, x1, y1 + off], fill=color)
     elif ch == "╭":
         d.line([cx + r, cy, x + w, cy], fill=color)
         d.line([cx, cy + r, cx, y + h], fill=color)

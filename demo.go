@@ -24,12 +24,13 @@ func withLink(e event) event {
 
 func demoModel(now time.Time, loaded bool) model {
 	m := model{
-		demo: true,
+		demo:  true,
+		theme: defaultTheme,
 		cfg: config{Name: "Ana", Agenda: "google",
 			JiraURL: "https://exemplo.atlassian.net", JiraEmail: "ana@exemplo.com", JiraToken: "x"},
 		now:           now,
 		width:         112,
-		height:        30,
+		height:        36,
 		prsLoading:    !loaded,
 		agendaLoading: !loaded,
 		jiraLoading:   !loaded,

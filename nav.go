@@ -3,7 +3,6 @@ package main
 import (
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -20,10 +19,6 @@ const (
 	boxJira   = "jira"
 	boxAgenda = "agenda"
 )
-
-var selStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.AdaptiveColor{Light: "#FFFFFF", Dark: "#1E1E2E"}).
-	Background(accent)
 
 // items lista, na ordem da tela, as linhas visíveis que têm um link.
 func (m model) items() []item {

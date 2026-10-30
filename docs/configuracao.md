@@ -48,6 +48,7 @@ PAINEL_AGENDA=ics PAINEL_ICS_URL=~/Downloads/teste.ics painel
 | `JIRA_TOKEN` | `JIRA_API_TOKEN` | Token de API da Atlassian |
 | `JIRA_JQL` | `assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC` | Busca mostrada na caixa |
 | `JIRA_INTERVAL` | `5m` | De quanto em quanto tempo buscar o Jira |
+| `THEME` | `default` | Tema: cores, borda e relógio. Veja [temas.md](temas.md) |
 | `NOTIFY` | `off` | Avisos no desktop: `on`, `off` ou uma lista como `review,ci,meeting`. Veja [notificacoes.md](notificacoes.md) |
 | `NOTIFY_SOUND` | `off` | Quais avisos também tocam som, no mesmo formato de `NOTIFY` |
 | `NOTIFY_BEFORE` | `5m` | Com quanta antecedência avisar de uma reunião |
@@ -129,6 +130,7 @@ Além do `config`, o painel usa estes arquivos em `~/.config/painel/`:
 |---|---|---|
 | `google-client.json` | você, baixando do Google Cloud | Identifica o "app" no login do Google |
 | `google-token.json` | `painel auth` | Seu login no Google Calendar |
+| `themes/<nome>` | você | Temas próprios (veja [temas.md](temas.md)) |
 
 Os dois são credenciais. Veja [seguranca.md](seguranca.md).
 

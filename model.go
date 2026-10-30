@@ -39,10 +39,14 @@ type model struct {
 	meetingsSent map[string]bool
 
 	selKey string // linha selecionada com as setas; vazia = nenhuma
+	theme  string
 }
 
 func newModel(cfg config) model {
+	t := loadTheme(cfg.Theme)
+	applyTheme(t)
 	return model{
+		theme:         t.Name,
 		cfg:           cfg,
 		now:           time.Now(),
 		prsLoading:    true,
@@ -124,6 +128,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.agendaLoading = m.cfg.Agenda != ""
 			m.jiraLoading = m.cfg.jiraEnabled()
 			return m, tea.Batch(m.loadPRs(), m.loadAgenda(), m.loadJira())
+		case "t":
+			t := loadTheme(nextTheme(m.theme))
+			applyTheme(t)
+			m.theme = t.Name
 		case "p":
 			return m, openURL("https://github.com/pulls/review-requested")
 		case "j":

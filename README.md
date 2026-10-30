@@ -121,6 +121,19 @@ Por padrão, a caixa mostra `assignee = currentUser() AND statusCategory != Done
 Para outra busca, use `JIRA_JQL`. Detalhes em
 [docs/configuracao.md](docs/configuracao.md#jira).
 
+## Temas
+
+Sete temas prontos (`default`, `dracula`, `nord`, `gruvbox`, `tokyo-night`,
+`solarized` e `mono`), cada um com suas cores, borda e fonte do relógio. Aperte
+`t` para trocar na hora, ou fixe um no config:
+
+```sh
+THEME=nord
+```
+
+Dá para criar o seu num arquivo, sem recompilar. Veja
+[docs/temas.md](docs/temas.md).
+
 ## Notificações
 
 O painel pode avisar no desktop (com som, se você quiser) quando chega um
@@ -145,6 +158,7 @@ Detalhes e o que funciona em cada sistema em
 | `enter` | Abre o item selecionado: o PR, o card ou o link da chamada |
 | `esc` | Desmarca a seleção (sem seleção, sai) |
 | `r` | Atualiza tudo agora |
+| `t` | Troca o tema |
 | `p` | Abre no navegador a lista de PRs pedindo sua revisão |
 | `j` | Abre no navegador a busca do Jira (se configurado) |
 | `q` ou `ctrl+c` | Sai |
@@ -155,6 +169,7 @@ Detalhes e o que funciona em cada sistema em
 painel          # abre o dashboard
 painel auth     # login no Google Calendar (uma vez)
 painel demo     # a tela com dados fictícios, sem login em nada
+painel themes   # amostra de todos os temas
 painel version  # versão instalada
 painel help     # ajuda
 ```
@@ -172,6 +187,7 @@ PR_INTERVAL=2m
 CAL_INTERVAL=5m
 REVIEW_MAX_AGE=7d    # só pedidos de revisão da última semana
 NOTIFY=on            # avisos no desktop
+THEME=dracula        # tema
 JIRA_URL=https://empresa.atlassian.net
 ```
 
@@ -214,6 +230,7 @@ A lista completa está em [docs/problemas.md](docs/problemas.md).
 | [docs/configuracao.md](docs/configuracao.md) | Referência de todas as opções |
 | [docs/funcionamento.md](docs/funcionamento.md) | Como os números são calculados e quando atualizam |
 | [docs/notificacoes.md](docs/notificacoes.md) | Avisos no desktop e com som |
+| [docs/temas.md](docs/temas.md) | Temas prontos e como criar o seu |
 | [docs/seguranca.md](docs/seguranca.md) | O que é guardado e quais acessos o painel tem |
 | [docs/problemas.md](docs/problemas.md) | Erros e como resolver |
 | [docs/arquitetura.md](docs/arquitetura.md) | Como o código é organizado, para quem quer contribuir |

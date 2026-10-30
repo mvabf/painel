@@ -10,25 +10,6 @@ import (
 )
 
 var (
-	accent  = lipgloss.AdaptiveColor{Light: "#7D56F4", Dark: "#B49CFF"}
-	pink    = lipgloss.AdaptiveColor{Light: "#D6336C", Dark: "#FF7AB2"}
-	green   = lipgloss.AdaptiveColor{Light: "#2B8A3E", Dark: "#69DB7C"}
-	yellow  = lipgloss.AdaptiveColor{Light: "#E67700", Dark: "#FFD43B"}
-	blue    = lipgloss.AdaptiveColor{Light: "#1971C2", Dark: "#74C0FC"}
-	subtle  = lipgloss.AdaptiveColor{Light: "#868E96", Dark: "#6C7086"}
-	errColr = lipgloss.AdaptiveColor{Light: "#C92A2A", Dark: "#FF6B6B"}
-
-	clockStyle = lipgloss.NewStyle().Foreground(accent)
-	greetStyle = lipgloss.NewStyle().Bold(true)
-	dimStyle   = lipgloss.NewStyle().Foreground(subtle)
-	errStyle   = lipgloss.NewStyle().Foreground(errColr)
-	boxStyle   = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(subtle).
-			Padding(0, 1)
-)
-
-var (
 	weekdays = []string{"domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"}
 	months   = []string{"janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"}
 )
@@ -343,12 +324,6 @@ func (m model) viewPRBox(title, note string, prs []pr, total int, line func(pr) 
 	return strings.Join(lines, "\n")
 }
 
-var (
-	okStyle   = lipgloss.NewStyle().Foreground(green)
-	failStyle = lipgloss.NewStyle().Foreground(errColr)
-	waitStyle = lipgloss.NewStyle().Foreground(yellow)
-)
-
 func (m model) cardsByKey() map[string]issue {
 	cards := map[string]issue{}
 	for _, it := range m.jira.Issues {
@@ -378,8 +353,6 @@ func prFor(it issue, prs []pr) *pr {
 	}
 	return nil
 }
-
-var cardStyle = lipgloss.NewStyle().Foreground(blue)
 
 // prLine: ícone do CI, repo#número, marcadores de revisão/conflito, status do
 // card no Jira e título.
@@ -710,12 +683,19 @@ func (m model) viewFooter() string {
 	} else {
 		parts = append(parts, "↑↓ navega")
 	}
-	parts = append(parts, "r atualiza", "p abre revisões")
+	parts = append(parts, "r atualiza", "t tema: "+m.themeLabel(), "p abre revisões")
 	if m.cfg.jiraEnabled() {
 		parts = append(parts, "j abre o Jira")
 	}
 	parts = append(parts, "q sai")
 	return strings.Join(wrapParts(strings.Join(parts, " · "), m.width-4), "\n")
+}
+
+func (m model) themeLabel() string {
+	if m.theme == "" {
+		return defaultTheme
+	}
+	return m.theme
 }
 
 func (m model) spinner(loading bool) string {

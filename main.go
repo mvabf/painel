@@ -17,6 +17,7 @@ uso:
   painel          abre o dashboard
   painel auth     faz login no Google Calendar (veja docs/agenda.md)
   painel demo     abre o dashboard com dados fictícios, sem login em nada
+  painel themes   mostra os temas disponíveis (escolha com THEME= no config)
   painel help     mostra esta ajuda
   painel version  mostra a versão
 
@@ -32,8 +33,15 @@ func main() {
 				os.Exit(1)
 			}
 			return
+		case "themes":
+			printThemes()
+			return
 		case "demo":
-			run(demoModel(time.Now(), true))
+			m := demoModel(time.Now(), true)
+			t := loadTheme(loadConfig().Theme)
+			applyTheme(t)
+			m.theme = t.Name
+			run(m)
 			return
 		case "version", "-v", "--version":
 			fmt.Println("painel", version)

@@ -13,7 +13,8 @@ main.go         entrada: subcomandos (auth, version, help) e início do programa
 config.go       leitura de ~/.config/painel/config e das variáveis PAINEL_*
 model.go        estado, mensagens e Update: relógio, ciclos de busca, teclas
 view.go         View: layout, caixas, cores e textos
-bigclock.go     fonte de 5 linhas do relógio grande
+bigclock.go     fontes de 5 linhas do relógio grande
+theme.go        temas: cores, bordas, fonte do relógio e temas de arquivo
 demo.go         dados fictícios do `painel demo` e do GIF do README
 prs.go          busca de PRs via `gh api graphql` (uma consulta só)
 agenda.go       agenda via iCal (URL ou arquivo) e ordenação dos eventos
@@ -24,6 +25,7 @@ notify.go       notificações no desktop: o que mudou entre duas buscas e o env
 view_test.go    testes de renderização com dados falsos
 agenda_test.go  testes do iCal: recorrências, remarcações, recusados, repetidos
 nav_test.go     testes das teclas de navegação e dos links de reunião
+theme_test.go   testes dos temas, do arquivo de tema e da tecla t
 notify_test.go  testes de quando cada aviso dispara
 demo_test.go    gera os quadros do GIF do README (só com PAINEL_DEMO_DIR) e testa a demo
 scripts/demo_gif.py       desenha os quadros em docs/demo.gif
@@ -124,8 +126,9 @@ nova, por exemplo erros do Bugsnag:
 ## Estilo
 
 - Textos da interface, comentários e mensagens de erro em **português**.
-- Cores são `lipgloss.AdaptiveColor` (valor claro e escuro) e ficam declaradas
-  no topo de `view.go`.
+- Cores e estilos vêm do tema ativo (`theme.go`). Use as variáveis `accent`,
+  `dimStyle`, `okStyle` etc., nunca uma cor fixa, para a tela seguir o tema.
+  `applyTheme` recria todas quando o tema muda.
 - Mensagens de erro começam com a fonte (`gh:`, `agenda:`), porque aparecem
   sozinhas dentro da caixa.
 - Credenciais e dados pessoais nunca entram no repositório: tudo fica em

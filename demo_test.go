@@ -27,12 +27,14 @@ func TestDemoFrames(t *testing.T) {
 	lipgloss.SetColorProfile(termenv.TrueColor)
 	lipgloss.SetHasDarkBackground(true)
 
-	// 14:59:53 → 15:00:13: carrega os dados e vira o minuto, quando a
-	// reunião das 14h termina e a das 15h começa; depois as setas descem
-	// pelas revisões até os meus PRs.
+	// 14:59:53 → 15:00:19: carrega os dados e vira o minuto, quando a
+	// reunião das 14h termina e a das 15h começa; as setas descem pelas
+	// revisões até os meus PRs e, no fim, a tecla t passa pelos temas.
+	defer applyTheme(builtinThemes[0])
 	start := time.Date(2026, 10, 28, 14, 59, 53, 0, time.Local)
 	loaded := demoModel(start.Add(3*time.Second), true)
-	for i := 0; i < 21; i++ {
+	themes := len(builtinThemes) - 1
+	for i := 0; i < 21+themes; i++ {
 		now := start.Add(time.Duration(i) * time.Second)
 		m := demoModel(now, false)
 		if i >= 3 {
@@ -40,9 +42,12 @@ func TestDemoFrames(t *testing.T) {
 			m.now = now
 		}
 		m.demo = false
-		for step := 14; step <= i; step += 2 {
+		for step := 14; step <= min(i, 20); step += 2 {
 			m = m.move(1)
 		}
+		th := builtinThemes[max(0, i-20)]
+		applyTheme(th)
+		m.theme = th.Name
 		name := filepath.Join(dir, fmt.Sprintf("frame_%03d.ans", i))
 		if err := os.WriteFile(name, []byte(m.View()), 0o644); err != nil {
 			t.Fatal(err)

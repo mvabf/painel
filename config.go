@@ -26,6 +26,8 @@ type config struct {
 	JiraJQL      string
 	JiraInterval time.Duration
 
+	Theme string
+
 	Notify       map[string]bool // eventos que viram notificação no desktop
 	NotifySound  map[string]bool // eventos que também tocam som
 	NotifyBefore time.Duration   // antecedência do aviso de reunião
@@ -88,6 +90,8 @@ func loadConfig() config {
 		JiraToken:    first(get("JIRA_TOKEN"), std("JIRA_API_TOKEN")),
 		JiraJQL:      first(get("JIRA_JQL"), defaultJiraJQL),
 		JiraInterval: parseDuration(get("JIRA_INTERVAL"), 5*time.Minute),
+
+		Theme: get("THEME"),
 
 		Notify:       parseEvents(get("NOTIFY")),
 		NotifySound:  parseEvents(get("NOTIFY_SOUND")),
