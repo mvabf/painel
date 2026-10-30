@@ -28,29 +28,30 @@ var selStyle = lipgloss.NewStyle().
 // items lista, na ordem da tela, as linhas visíveis que têm um link.
 func (m model) items() []item {
 	var its []item
+	limit := m.listLimit()
 	review, _, _ := m.reviewList()
 	for i, p := range review {
-		if i == maxListItems {
+		if i == limit {
 			break
 		}
 		its = append(its, item{boxReview, p.URL, p.URL})
 	}
 	for i, p := range m.prs.Mine {
-		if i == maxListItems {
+		if i == limit {
 			break
 		}
 		its = append(its, item{boxMine, p.URL, p.URL})
 	}
 	if m.cfg.jiraEnabled() {
 		for i, it := range m.jira.Issues {
-			if i == maxListItems {
+			if i == limit {
 				break
 			}
 			its = append(its, item{boxJira, issueKey(it), m.cfg.JiraURL + "/browse/" + it.Key})
 		}
 	}
 	for i, e := range m.agenda.Events {
-		if i == maxAgendaItems {
+		if i == agendaLimit(limit) {
 			break
 		}
 		if e.Link != "" {

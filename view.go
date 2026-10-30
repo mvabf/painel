@@ -34,38 +34,62 @@ var (
 )
 
 const (
-	maxListItems   = 6
-	maxAgendaItems = maxListItems + 2
+	maxListItems = 6  // itens por lista quando não se sabe a altura
+	minListItems = 3  // mesmo num terminal baixo
+	maxFetched   = 50 // o tamanho das buscas; não adianta pedir mais
 )
 
 func (m model) View() string {
 	if m.width == 0 {
 		return ""
 	}
+	body := m.viewBody(m.listLimit())
+	out := lipgloss.JoinVertical(lipgloss.Left, m.viewHeader(), "", body, "", m.viewFooter())
+	return lipgloss.NewStyle().Padding(1, 2).Render(out)
+}
 
-	header := m.viewHeader()
-
-	n := 3
+func (m model) boxCount() int {
 	if m.cfg.jiraEnabled() {
-		n = 4
+		return 4
 	}
-	cols, colWidth := gridLayout(m.width-4, n)
+	return 3
+}
+
+// viewBody monta a grade de caixas, cada lista com até limit itens.
+func (m model) viewBody(limit int) string {
+	cols, colWidth := gridLayout(m.width-4, m.boxCount())
 
 	toReview, reviewTotal, reviewNotes := m.reviewList()
 	cards := m.cardsByKey()
 	reviewLine := func(p pr) string { return reviewPRLine(p, m.now, cardFor(p, cards)) }
 	mineLine := func(p pr) string { return prLine(p, cardFor(p, cards)) }
-	review := m.viewPRBox("Revisões pendentes", strings.Join(reviewNotes, " · "), toReview, reviewTotal, reviewLine, pink, colWidth)
-	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, mineLine, green, colWidth)
+	review := m.viewPRBox("Revisões pendentes", strings.Join(reviewNotes, " · "), toReview, reviewTotal, reviewLine, pink, colWidth, limit)
+	mine := m.viewPRBox("Meus PRs abertos", mineSummary(m.prs.Mine), m.prs.Mine, m.prs.MineTotal, mineLine, green, colWidth, limit)
 	boxes := []string{review, mine}
 	if m.cfg.jiraEnabled() {
-		boxes = append(boxes, m.viewJiraBox(colWidth))
+		boxes = append(boxes, m.viewJiraBox(colWidth, limit))
 	}
-	boxes = append(boxes, m.viewAgendaBox(colWidth))
-	body := renderGrid(boxes, cols, colWidth)
+	boxes = append(boxes, m.viewAgendaBox(colWidth, limit))
+	return renderGrid(boxes, cols, colWidth)
+}
 
-	out := lipgloss.JoinVertical(lipgloss.Left, header, "", body, "", m.viewFooter())
-	return lipgloss.NewStyle().Padding(1, 2).Render(out)
+// listLimit diz quantos itens cabem em cada lista na altura do terminal:
+// mede a tela com o padrão de 6, distribui a sobra entre as linhas da
+// grade e confere se coube. Nunca fica abaixo de minListItems.
+func (m model) listLimit() int {
+	if m.height == 0 {
+		return maxListItems
+	}
+	fixed := 2 + lipgloss.Height(m.viewHeader()) + 2 + lipgloss.Height(m.viewFooter())
+	cols, _ := gridLayout(m.width-4, m.boxCount())
+	rows := (m.boxCount() + cols - 1) / cols
+
+	slack := m.height - fixed - lipgloss.Height(m.viewBody(maxListItems))
+	limit := max(minListItems, min(maxFetched, maxListItems+slack/rows))
+	for limit > minListItems && fixed+lipgloss.Height(m.viewBody(limit)) > m.height {
+		limit--
+	}
+	return limit
 }
 
 // reviewList aplica o REVIEW_MAX_AGE e monta as notas da caixa de revisões.
@@ -124,6 +148,9 @@ func renderGrid(contents []string, cols, colWidth int) string {
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, rows...)
 }
+
+// agendaLimit: a agenda não tem linha de resumo, então cabem dois a mais.
+func agendaLimit(limit int) int { return limit + 2 }
 
 func (m model) viewHeader() string {
 	now := m.now
@@ -191,7 +218,7 @@ func (m model) viewNextEvent() string {
 }
 
 // viewPRBox e viewAgendaBox devolvem só o conteúdo; a borda é aplicada em View.
-func (m model) viewPRBox(title, note string, prs []pr, total int, line func(pr) string, color lipgloss.AdaptiveColor, width int) string {
+func (m model) viewPRBox(title, note string, prs []pr, total int, line func(pr) string, color lipgloss.AdaptiveColor, width, limit int) string {
 	inner := width - 2 - 2 // borda + padding
 	titleStyle := lipgloss.NewStyle().Foreground(color).Bold(true)
 
@@ -214,8 +241,8 @@ func (m model) viewPRBox(title, note string, prs []pr, total int, line func(pr) 
 	}
 
 	for i, p := range prs {
-		if i == maxListItems {
-			lines = append(lines, dimStyle.Render(fmt.Sprintf("+%d mais", max(total, len(prs))-maxListItems)))
+		if i == limit {
+			lines = append(lines, dimStyle.Render(fmt.Sprintf("+%d mais", max(total, len(prs))-limit)))
 			break
 		}
 		lines = append(lines, m.mark(p.URL, line(p), inner))
@@ -425,7 +452,7 @@ func wrapParts(note string, width int) []string {
 	return lines
 }
 
-func (m model) viewAgendaBox(width int) string {
+func (m model) viewAgendaBox(width, limit int) string {
 	inner := width - 2 - 2
 	titleStyle := lipgloss.NewStyle().Foreground(yellow).Bold(true)
 
@@ -450,7 +477,7 @@ func (m model) viewAgendaBox(width int) string {
 
 	shown := 0
 	for _, e := range m.agenda.Events {
-		if shown == maxAgendaItems {
+		if shown == agendaLimit(limit) {
 			lines = append(lines, dimStyle.Render("…"))
 			break
 		}
@@ -484,7 +511,7 @@ func (m model) viewAgendaBox(width int) string {
 	return strings.Join(lines, "\n")
 }
 
-func (m model) viewJiraBox(width int) string {
+func (m model) viewJiraBox(width, limit int) string {
 	inner := width - 2 - 2
 	titleStyle := lipgloss.NewStyle().Foreground(blue).Bold(true)
 
@@ -526,8 +553,8 @@ func (m model) viewJiraBox(width int) string {
 	}
 
 	for i, it := range m.jira.Issues {
-		if i == maxListItems {
-			more := fmt.Sprintf("+%d mais", len(m.jira.Issues)-maxListItems)
+		if i == limit {
+			more := fmt.Sprintf("+%d mais", len(m.jira.Issues)-limit)
 			if m.jira.More {
 				more = "e mais"
 			}
@@ -586,7 +613,7 @@ func (m model) viewFooter() string {
 	if !m.jira.At.IsZero() {
 		parts = append(parts, "jira às "+m.jira.At.Format("15:04"))
 	}
-	if _, i := m.selected(); i >= 0 {
+	if m.selKey != "" {
 		parts = append(parts, "enter abre", "esc desmarca")
 	} else {
 		parts = append(parts, "↑↓ navega")

@@ -137,6 +137,7 @@ Os dois são credenciais. Veja [seguranca.md](seguranca.md).
 - O horário do expediente na barra de progresso é fixo em **9h–18h**, de
   segunda a sexta.
 - O idioma da interface é português.
-- O número de itens por caixa: até 6 PRs e 8 eventos.
+- O número de itens por caixa: ele acompanha a altura do terminal (veja
+  [funcionamento.md](funcionamento.md#layout)).
 
 Se precisar de algum desses, abra uma issue.

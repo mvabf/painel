@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -260,5 +262,39 @@ func TestIssueComPR(t *testing.T) {
 		if got := ansi.Strip(prTag(p)); got != want {
 			t.Errorf("prTag(%+v) = %q, esperado %q", p, got, want)
 		}
+	}
+}
+
+func TestListaAcompanhaAltura(t *testing.T) {
+	m := fakeModel(150)
+	for i := 0; i < 20; i++ {
+		m.prs.ToReview = append(m.prs.ToReview, pr{Number: 100 + i, Title: "PR", Repo: "web-app", URL: fmt.Sprint(i), RequestedAt: m.now})
+	}
+	m.prs.ToReviewTotal = len(m.prs.ToReview)
+
+	m.height = 0
+	if got := m.listLimit(); got != maxListItems {
+		t.Errorf("sem altura conhecida deveria usar %d, veio %d", maxListItems, got)
+	}
+
+	for _, h := range []int{30, 40, 60} {
+		m.height = h
+		limit := m.listLimit()
+		if got := lipgloss.Height(m.View()); got > h {
+			t.Errorf("altura %d: a tela ficou com %d linhas (limite %d)", h, got, limit)
+		}
+		m.height = h + 1
+		if bigger := m.listLimit(); bigger < limit {
+			t.Errorf("mais altura não pode mostrar menos itens: %d → %d", limit, bigger)
+		}
+	}
+
+	m.height = 60
+	if got := m.listLimit(); got < 15 {
+		t.Errorf("com 60 linhas deveriam caber bem mais que 6 itens, veio %d", got)
+	}
+	m.height = 10
+	if got := m.listLimit(); got != minListItems {
+		t.Errorf("num terminal baixo deveria ficar no mínimo %d, veio %d", minListItems, got)
 	}
 }

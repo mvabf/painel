@@ -229,6 +229,10 @@ lugar a "fim de semana 🎉".
   partir de ~74. Com o Jira (4 caixas): uma linha a partir de ~146 colunas.
 - Num terminal mais estreito que isso, as caixas ficam empilhadas.
 - As caixas de uma mesma linha têm a mesma altura.
+- O número de itens em cada lista acompanha a **altura** do terminal: com a
+  janela maximizada, cabem bem mais que os 6 de um terminal de 30 linhas, e o
+  resto vira "+N mais". Num terminal baixo, cada lista mostra pelo menos 3. A
+  agenda, que não tem linha de resumo, mostra 2 a mais que as outras caixas.
 - Títulos longos são cortados com `…` para não quebrar o layout.
 - O painel usa a tela alternativa do terminal: ao sair, seu terminal volta
   exatamente como estava.
@@ -240,4 +244,4 @@ lugar a "fim de semana 🎉".
 - **Até 50 PRs por lista.** Os números (total, "+N" dos times e o resumo) são
   exatos, mas o resumo dos seus PRs considera só os 50 atualizados mais
   recentemente.
-- **Agenda:** até 100 eventos por dia na API do Google. Na tela, até 8.
+- **Agenda:** até 100 eventos por dia na API do Google. Na tela, quantos couberem.
