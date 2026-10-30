@@ -149,6 +149,13 @@ func renderGrid(contents []string, cols, colWidth int) string {
 	return lipgloss.JoinVertical(lipgloss.Left, rows...)
 }
 
+// timelineWidth usa o espaço à direita do relógio, sem exagerar em
+// monitores muito largos.
+func timelineWidth(screen, clock int) int {
+	free := screen - 4 - clock - 5 - len("expediente ") - len(" 100%")
+	return max(20, min(108, free))
+}
+
 // agendaLimit: a agenda não tem linha de resumo, então cabem dois a mais.
 func agendaLimit(limit int) int { return limit + 2 }
 
@@ -171,12 +178,11 @@ func (m model) viewHeader() string {
 
 	date := fmt.Sprintf("%s, %d de %s", weekdays[now.Weekday()], now.Day(), months[now.Month()-1])
 
-	info := []string{
+	info := append([]string{
 		greetStyle.Render(greeting),
 		dimStyle.Render(date),
 		"",
-		m.viewDayProgress(),
-	}
+	}, m.viewDayProgress(timelineWidth(m.width, lipgloss.Width(clock)))...)
 	if next := m.viewNextEvent(); next != "" {
 		info = append(info, next)
 	}
@@ -184,22 +190,108 @@ func (m model) viewHeader() string {
 	return lipgloss.JoinHorizontal(lipgloss.Top, clock, "     ", lipgloss.JoinVertical(lipgloss.Left, info...))
 }
 
-// viewDayProgress mostra quanto do expediente (9h–18h) já passou.
-func (m model) viewDayProgress() string {
+// viewDayProgress mostra o expediente (9h–18h) como uma linha do tempo: o
+// que já passou em destaque, as reuniões em amarelo e um ponto no agora.
+func (m model) viewDayProgress(width int) []string {
 	now := m.now
 	if wd := now.Weekday(); wd == time.Saturday || wd == time.Sunday {
-		return dimStyle.Render("fim de semana 🎉")
+		return []string{dimStyle.Render("fim de semana 🎉")}
 	}
-	start := time.Date(now.Year(), now.Month(), now.Day(), 9, 0, 0, 0, time.Local)
-	end := time.Date(now.Year(), now.Month(), now.Day(), 18, 0, 0, 0, time.Local)
-	frac := float64(now.Sub(start)) / float64(end.Sub(start))
-	frac = max(0, min(1, frac))
+	start := time.Date(now.Year(), now.Month(), now.Day(), workStart, 0, 0, 0, time.Local)
+	end := time.Date(now.Year(), now.Month(), now.Day(), workEnd, 0, 0, 0, time.Local)
+	frac := max(0, min(1, float64(now.Sub(start))/float64(end.Sub(start))))
 
-	const width = 20
-	filled := int(frac * width)
-	bar := lipgloss.NewStyle().Foreground(accent).Render(strings.Repeat("━", filled)) +
-		dimStyle.Render(strings.Repeat("━", width-filled))
-	return fmt.Sprintf("expediente %s %s", bar, dimStyle.Render(fmt.Sprintf("%3.0f%%", frac*100)))
+	const label = "expediente "
+	var bar strings.Builder
+	for _, c := range timelineCells(now, m.agenda.Events, start, end, width) {
+		switch c {
+		case cellNow:
+			bar.WriteString(lipgloss.NewStyle().Foreground(pink).Render("●"))
+		case cellMeetingPast:
+			bar.WriteString(lipgloss.NewStyle().Foreground(yellow).Faint(true).Render("━"))
+		case cellMeeting:
+			bar.WriteString(lipgloss.NewStyle().Foreground(yellow).Render("━"))
+		case cellPast:
+			bar.WriteString(lipgloss.NewStyle().Foreground(accent).Render("━"))
+		default:
+			bar.WriteString(dimStyle.Render("━"))
+		}
+	}
+	pct := dimStyle.Render(fmt.Sprintf("%3.0f%%", frac*100))
+	return []string{
+		strings.Repeat(" ", len(label)) + dimStyle.Render(hourLabels(width)),
+		label + bar.String() + " " + pct,
+	}
+}
+
+const (
+	workStart = 9
+	workEnd   = 18
+)
+
+type cell int
+
+const (
+	cellFuture cell = iota
+	cellPast
+	cellMeeting
+	cellMeetingPast
+	cellNow
+)
+
+// timelineCells divide o expediente em width pedaços iguais e diz o que há
+// no meio de cada um.
+func timelineCells(now time.Time, events []event, start, end time.Time, width int) []cell {
+	cells := make([]cell, width)
+	span := end.Sub(start)
+	nowCell := -1
+	if !now.Before(start) && now.Before(end) {
+		nowCell = int(float64(now.Sub(start)) / float64(span) * float64(width))
+	}
+	for i := range cells {
+		t := start.Add(time.Duration((float64(i) + 0.5) / float64(width) * float64(span)))
+		past := t.Before(now)
+		meeting := false
+		for _, e := range events {
+			if !e.AllDay && !t.Before(e.Start) && t.Before(e.End) {
+				meeting = true
+				break
+			}
+		}
+		switch {
+		case i == nowCell:
+			cells[i] = cellNow
+		case meeting && past:
+			cells[i] = cellMeetingPast
+		case meeting:
+			cells[i] = cellMeeting
+		case past:
+			cells[i] = cellPast
+		}
+	}
+	return cells
+}
+
+// hourLabels escreve as horas cheias sobre a linha do tempo. O 18h fica
+// sempre, alinhado ao fim; as outras horas são puladas se encostariam na
+// vizinha.
+func hourLabels(width int) string {
+	line := []rune(strings.Repeat(" ", width))
+	last := fmt.Sprintf("%dh", workEnd)
+	lastPos := width - len(last)
+	copy(line[lastPos:], []rune(last))
+
+	next := 0
+	for h := workStart; h < workEnd; h++ {
+		pos := int(float64(h-workStart) / float64(workEnd-workStart) * float64(width))
+		text := fmt.Sprintf("%dh", h)
+		if pos < next || pos+len(text) >= lastPos {
+			continue
+		}
+		copy(line[pos:], []rune(text))
+		next = pos + len(text) + 1
+	}
+	return string(line)
 }
 
 func (m model) viewNextEvent() string {

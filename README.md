@@ -14,7 +14,7 @@ fictícios.
 | Bloco | O que mostra |
 |---|---|
 | **Relógio** | Hora em dígitos grandes, segundos, saudação ("Bom dia", "Boa tarde", "Boa noite") e a data por extenso em português |
-| **Expediente** | Barra com quanto do dia útil (9h–18h) já passou. No fim de semana, avisa que é fim de semana |
+| **Expediente** | Linha do tempo do dia útil (9h–18h) com as horas marcadas: o que já passou em destaque, as reuniões em amarelo e um ponto no agora. Mostra de relance onde sobra tempo livre. No fim de semana, avisa que é fim de semana |
 | **Agora / próxima** | A reunião em andamento ou a próxima, com quanto tempo falta ("próxima: Daily em 12 min") |
 | **Revisões pendentes** | PRs abertos em que pediram revisão **diretamente a você**, com há quanto tempo cada um espera (o mais antigo no topo, em amarelo a partir de 1 dia e vermelho a partir de 3), e abaixo quantos pedidos foram feitos só aos seus times |
 | **Meus PRs abertos** | PRs abertos de sua autoria com o estado do CI (✓ ✗ ●), marcadores de **aprovado**, **mudanças** pedidas e **conflito**, e um resumo do que pede atenção. Rascunhos (draft) aparecem apagados |

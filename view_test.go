@@ -298,3 +298,45 @@ func TestListaAcompanhaAltura(t *testing.T) {
 		t.Errorf("num terminal baixo deveria ficar no mínimo %d, veio %d", minListItems, got)
 	}
 }
+
+func TestTimelineCells(t *testing.T) {
+	at := func(h, min int) time.Time { return time.Date(2026, 10, 28, h, min, 0, 0, time.Local) }
+	events := []event{
+		{Title: "Feriado", AllDay: true, Start: at(0, 0), End: at(24, 0)},
+		{Title: "Daily", Start: at(10, 0), End: at(11, 0)},
+		{Title: "Refinamento", Start: at(14, 0), End: at(15, 0)},
+	}
+	cells := timelineCells(at(12, 15), events, at(9, 0), at(18, 0), 18)
+	var got strings.Builder
+	for _, c := range cells {
+		got.WriteString(map[cell]string{cellFuture: ".", cellPast: "=", cellMeeting: "M", cellMeetingPast: "m", cellNow: "@"}[c])
+	}
+	if want := "==mm==@...MM......"; got.String() != want {
+		t.Errorf("got %s, want %s", got.String(), want)
+	}
+
+	none := timelineCells(at(20, 0), nil, at(9, 0), at(18, 0), 9)
+	for i, c := range none {
+		if c != cellPast {
+			t.Errorf("depois do expediente tudo já passou; célula %d = %v", i, c)
+		}
+	}
+}
+
+func TestHourLabels(t *testing.T) {
+	if got := hourLabels(36); got != "9h  10h 11h 12h 13h 14h 15h 16h  18h" {
+		t.Errorf("got %q", got)
+	}
+	for _, w := range []int{20, 36, 54, 108} {
+		got := hourLabels(w)
+		if !strings.HasPrefix(got, "9h") || !strings.HasSuffix(got, "18h") {
+			t.Errorf("largura %d: deveria ir de 9h a 18h: %q", w, got)
+		}
+		if len(got) != w {
+			t.Errorf("largura %d: rótulos passaram da linha: %q", w, got)
+		}
+		if strings.Contains(got, "h1") || strings.Contains(got, "hh") {
+			t.Errorf("largura %d: rótulos encostados: %q", w, got)
+		}
+	}
+}

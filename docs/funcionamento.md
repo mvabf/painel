@@ -214,11 +214,29 @@ Se uma busca falha (rede fora, `gh` deslogado, API fora do ar), o painel
 caixa. No ciclo seguinte ele tenta de novo, e o erro some quando der certo.
 Antes da primeira busca com sucesso, a contagem aparece como `…`.
 
-## Barra do expediente
+## Linha do tempo do expediente
 
-Vai de 0% às 9h até 100% às 18h, de segunda a sexta, no horário local. Antes
-das 9h fica em 0%, depois das 18h em 100%. No sábado e no domingo, a barra dá
-lugar a "fim de semana 🎉".
+```
+           9h    10h   11h   12h   13h   14h   15h   16h   17h  18h
+expediente ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●━━━━━━━━━━━━━━━━━━━━━  67%
+```
+
+Vai das 9h às 18h, de segunda a sexta, no horário local, e ocupa o espaço à
+direita do relógio (entre 20 e 108 colunas, conforme a largura do terminal).
+Cada pedaço da linha representa um intervalo igual do dia:
+
+| Cor | Significa |
+|---|---|
+| Destaque (roxo no tema padrão) | Já passou, sem reunião |
+| Amarelo | Reunião ainda por vir |
+| Amarelo apagado | Reunião que já passou |
+| Cinza | Tempo livre que ainda vem |
+| `●` rosa | Agora |
+
+Eventos de dia inteiro não entram. A porcentagem no fim é quanto do expediente
+já passou: 0% antes das 9h e 100% depois das 18h. Num terminal estreito, algumas
+horas do rótulo de cima são puladas para não encostarem, mas 9h e 18h sempre
+aparecem. No sábado e no domingo, a linha dá lugar a "fim de semana 🎉".
 
 ## Layout
 
