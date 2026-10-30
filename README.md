@@ -155,7 +155,8 @@ Detalhes e o que funciona em cada sistema em
 
 Aperte `n` e escreva quando e o quê: `15:30 ligar pro fornecedor`,
 `+20m café` ou `amanhã 9h revisar o PR`. Na hora, o painel mostra um balão e
-toca um alarme. O lembrete fica na tela até você concluir com `x`. Também dá
+toca um alarme. O lembrete fica na tela até você concluir com `x`; `d` exclui um que ainda
+não tocou. Também dá
 para criar pelo terminal:
 
 ```sh
@@ -174,6 +175,7 @@ Detalhes em [docs/lembretes.md](docs/lembretes.md).
 | `esc` | Desmarca a seleção (sem seleção, sai) |
 | `n` | Cria um lembrete |
 | `x` | Conclui o lembrete selecionado |
+| `d` | Exclui o lembrete selecionado |
 | `r` | Atualiza tudo agora |
 | `t` | Troca o tema |
 | `p` | Abre no navegador a lista de PRs pedindo sua revisão |

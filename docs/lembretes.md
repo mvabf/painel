@@ -30,13 +30,15 @@ O painel aberto percebe na hora o lembrete criado pelo terminal.
 
 ## Na tela
 
-A caixa **Lembretes** mostra os pendentes por horário. Os da próxima hora
+A caixa **Lembretes** mostra os pendentes por horário e só aparece quando há
+algum. Os da próxima hora
 aparecem em amarelo, com quanto falta ("15:20 em 20 min"). Os de outros dias
 mostram o dia ("amanhã 09:00", "sex 14:00", "25/12 10:00").
 
 Quando chega a hora, o lembrete ganha um `!` em vermelho e **continua na tela**
-até você concluir: selecione com as setas e aperte `x`. Se o texto tiver um
-link, `enter` abre o link.
+até você concluir: selecione com as setas e aperte `x`. Para apagar um
+lembrete que ainda não tocou (marcou errado, não precisa mais), selecione e
+aperte `d`. Se o texto tiver um link, `enter` abre o link.
 
 ## O alarme
 

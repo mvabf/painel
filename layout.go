@@ -93,13 +93,18 @@ func (m model) listLimit() int {
 
 func (m model) boxCount() int { return len(m.boxKeys()) }
 
-// boxKeys são as caixas na ordem da tela.
+// boxKeys são as caixas na ordem da tela. A de lembretes só aparece quando
+// há algum.
 func (m model) boxKeys() []string {
 	keys := []string{boxReview, boxMine}
 	if m.cfg.jiraEnabled() {
 		keys = append(keys, boxJira)
 	}
-	return append(keys, boxAgenda, boxReminders)
+	keys = append(keys, boxAgenda)
+	if len(m.reminders) > 0 {
+		keys = append(keys, boxReminders)
+	}
+	return keys
 }
 
 var boxTitles = map[string]string{

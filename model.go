@@ -147,7 +147,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Batch(m.loadPRs(), m.loadAgenda(), m.loadJira())
 		case "n":
 			m.typing, m.input, m.inputErr = true, "", ""
-		case "x":
+		case "x", "d", "delete":
 			if it, i := m.selected(); i >= 0 && it.Box == boxReminders {
 				m = m.removeReminder(it.Key)
 			}

@@ -149,8 +149,31 @@ func TestCriarEConcluirLembrete(t *testing.T) {
 	if _, cmd := press(m, "enter"); cmd != nil {
 		t.Error("enter num lembrete sem link não deveria abrir nada")
 	}
-	m = typeKeys(m, "x")
+	if !strings.Contains(ansi.Strip(m.View()), "d exclui") {
+		t.Error("um lembrete que ainda não tocou deveria mostrar d exclui")
+	}
+	m = typeKeys(m, "d")
 	if len(m.reminders) != 0 || len(loadReminders(m.remindersFile)) != 0 {
+		t.Errorf("d deveria excluir o lembrete: %+v", m.reminders)
+	}
+	if strings.Contains(ansi.Strip(m.View()), "Lembretes") {
+		t.Error("sem lembretes, a caixa deveria sumir")
+	}
+}
+
+func TestConcluirLembreteQueTocou(t *testing.T) {
+	m := navModel()
+	m.remindersFile = filepath.Join(t.TempDir(), "lembretes")
+	m.reminders = []reminder{{At: m.now.Add(-time.Minute), Text: "café", Fired: true}}
+	m, _ = press(m, "up")
+	if it, _ := m.selected(); it.Box != boxReminders {
+		t.Fatalf("↑ deveria cair no lembrete, veio %+v", it)
+	}
+	if !strings.Contains(ansi.Strip(m.View()), "x conclui") {
+		t.Error("um lembrete que tocou deveria mostrar x conclui")
+	}
+	m = typeKeys(m, "x")
+	if len(m.reminders) != 0 || m.selKey != "" {
 		t.Errorf("x deveria concluir o lembrete: %+v", m.reminders)
 	}
 }

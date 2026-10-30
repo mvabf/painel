@@ -20,7 +20,8 @@ import (
 )
 
 // reminder é um lembrete criado com a tecla n ou com `painel lembrar`.
-// Fired diz se o aviso já tocou; ele fica na tela até ser concluído com x.
+// Fired diz se o aviso já tocou; ele fica na tela até ser concluído com x
+// (ou excluído com d).
 type reminder struct {
 	At    time.Time
 	Text  string
@@ -286,6 +287,15 @@ func (m *model) persistReminders() {
 	m.remindersMod = modTime(m.remindersFile)
 }
 
+func (m model) reminderFired(key string) bool {
+	for _, r := range m.reminders {
+		if reminderKey(r) == key {
+			return r.Fired
+		}
+	}
+	return false
+}
+
 func (m model) removeReminder(key string) model {
 	rs := make([]reminder, 0, len(m.reminders))
 	for _, r := range m.reminders {
@@ -343,9 +353,6 @@ func (m model) viewRemindersBox(width, limit int) string {
 		lines = append(lines, failStyle.Render(fmt.Sprintf("%d na hora · x conclui", fired)))
 	}
 	lines = m.gap(lines)
-	if len(m.reminders) == 0 {
-		lines = append(lines, dimStyle.Render(ansi.Wrap("nenhum lembrete · aperte n para criar", inner, "")))
-	}
 
 	for i, r := range m.reminders {
 		if i == limit {

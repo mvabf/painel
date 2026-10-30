@@ -635,7 +635,11 @@ func (m model) viewFooter() string {
 	}
 	switch {
 	case strings.HasPrefix(m.selKey, "lembrete:"):
-		parts = append(parts, "x conclui", "esc desmarca")
+		if m.reminderFired(m.selKey) {
+			parts = append(parts, "x conclui", "esc desmarca")
+		} else {
+			parts = append(parts, "d exclui", "esc desmarca")
+		}
 	case m.selKey != "":
 		parts = append(parts, "enter abre", "esc desmarca")
 	default:
