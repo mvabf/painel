@@ -24,6 +24,7 @@ jira.go         cards do Jira Cloud (busca JQL)
 nav.go          seleção com as setas: itens da tela, movimento e destaque
 notify.go       notificações no desktop: o que mudou entre duas buscas e o envio
 reminders.go    lembretes: arquivo, horários escritos à mão, alarme, caixa e campo
+skill.go        `painel skill`: instala skills/painel-config/SKILL.md (embutido no binário)
 view_test.go    testes de renderização com dados falsos
 layout_test.go  testes de tamanho: a tela cabe em qualquer terminal, compactação e abas
 agenda_test.go  testes do iCal: recorrências, remarcações, recusados, repetidos

@@ -86,6 +86,21 @@ export PATH="$HOME/.local/bin:$PATH"
 Com isso, os PRs já aparecem. A agenda pede um passo a mais, explicado na
 próxima seção.
 
+### Configurar com um agente
+
+Se você usa o Claude Code, o painel traz um assistente que faz a configuração
+com você, um passo por vez (agenda, Jira, notificações, tema), sem pedir para
+colar token na conversa:
+
+```sh
+painel skill
+```
+
+Depois, no Claude Code, peça "configura o painel" ou rode `/painel-config`. Em
+outro agente, `painel skill --print` mostra as mesmas instruções para colar ou
+salvar onde ele lê. O texto fica em
+[skills/painel-config/SKILL.md](skills/painel-config/SKILL.md).
+
 ## Conectando a agenda
 
 O painel lê a agenda de três jeitos. Escolha o primeiro que funcionar pra você:
@@ -189,6 +204,7 @@ painel          # abre o dashboard
 painel auth     # login no Google Calendar (uma vez)
 painel lembrar 15:30 ligar pro fornecedor   # cria um lembrete (sem texto, lista)
 painel demo     # a tela com dados fictícios, sem login em nada
+painel skill    # instala o assistente de configuração para o Claude Code
 painel themes   # amostra de todos os temas
 painel version  # versão instalada
 painel help     # ajuda

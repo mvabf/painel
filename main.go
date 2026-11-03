@@ -20,6 +20,8 @@ uso:
                   cria um lembrete (ex.: 15:30 ligar pro fornecedor, +20m café,
                   amanhã 9h daily); sem argumentos, lista os pendentes
   painel demo     abre o dashboard com dados fictícios, sem login em nada
+  painel skill    instala o assistente de configuração para o Claude Code;
+                  com --print, mostra o texto para usar em outro agente
   painel themes   mostra os temas disponíveis (escolha com THEME= no config)
   painel help     mostra esta ajuda
   painel version  mostra a versão
@@ -39,6 +41,12 @@ func main() {
 		case "lembrar", "lembrete", "lembretes":
 			if err := addReminderCLI(os.Args[2:]); err != nil {
 				fmt.Fprintln(os.Stderr, "painel lembrar:", err)
+				os.Exit(1)
+			}
+			return
+		case "skill":
+			if err := installSkill(os.Args[2:]); err != nil {
+				fmt.Fprintln(os.Stderr, "painel skill:", err)
 				os.Exit(1)
 			}
 			return
