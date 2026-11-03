@@ -133,7 +133,7 @@ Ofereça em uma pergunta só, com os padrões:
   das reuniões. No Linux precisa do `notify-send`; com o **Não perturbe**
   ligado o balão não aparece (os lembretes tocam mesmo assim).
 - `THEME=...`: rode `painel themes` para ver as opções; a tecla `t` troca com
-  o painel aberto.
+  o painel aberto e já salva a escolha no config.
 - Intervalos: `PR_INTERVAL=2m`, `CAL_INTERVAL=5m`, `JIRA_INTERVAL=5m`.
 
 ## 6. Gravar e conferir
