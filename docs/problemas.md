@@ -119,9 +119,14 @@ não é suportado, só o Jira Cloud.
 
 ## Navegador
 
-**A tecla `p` ou o `painel auth` não abrem o navegador**
+**O `enter`, a tecla `p` ou o `painel auth` não abrem o navegador**
 O painel usa `xdg-open` no Linux, `open` no macOS e o handler padrão no Windows.
-No `painel auth`, o link também é impresso no terminal: copie e abra à mão.
+No **WSL**, o link vai para o navegador do Windows: o painel tenta o `wslview`
+(pacote `wslu`), depois o `rundll32.exe` do Windows e só então o `xdg-open`.
+Se nenhum funcionar, o rodapé avisa. Para escolher o navegador, defina a
+variável `BROWSER` (por exemplo `export BROWSER=wslview`), que é tentada antes
+de tudo. No `painel auth`, o link também é impresso no terminal: copie e abra à
+mão.
 
 ## `make docker-*` falha baixando dependências
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -143,5 +144,34 @@ func TestMeetingLink(t *testing.T) {
 		if got := meetingLink(c.texts...); got != c.want {
 			t.Errorf("meetingLink(%q) = %q, esperado %q", c.texts, got, c.want)
 		}
+	}
+}
+
+func TestNavegadorNoWSL(t *testing.T) {
+	url := "https://github.com/o/r/pull/1?a=1&b=2"
+	cmds := browserCommands(url, "", "linux", true)
+	if cmds[0][0] != "wslview" || cmds[len(cmds)-1][0] != "xdg-open" {
+		t.Errorf("no WSL deveria tentar o wslview primeiro e o xdg-open por último: %v", cmds)
+	}
+	for _, c := range cmds {
+		if c[len(c)-1] != url {
+			t.Errorf("o link deveria ir inteiro, sem passar por shell: %v", c)
+		}
+	}
+	if got := browserCommands(url, "firefox", "linux", false); got[0][0] != "firefox" || got[1][0] != "xdg-open" {
+		t.Errorf("BROWSER deveria vir antes do padrão: %v", got)
+	}
+}
+
+func TestErroAoAbrirAparece(t *testing.T) {
+	m := navModel()
+	next, _ := m.Update(openErrMsg{errors.New("não achei como abrir o navegador")})
+	m = next.(model)
+	if !strings.Contains(ansi.Strip(m.View()), "não achei como abrir") {
+		t.Error("o erro de abrir o link deveria aparecer no rodapé")
+	}
+	m, _ = press(m, "down")
+	if m.inputErr != "" {
+		t.Error("a próxima tecla deveria limpar o erro")
 	}
 }

@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
+	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -113,6 +116,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.typing {
 			return m.typeReminder(msg), nil
 		}
+		m.inputErr = ""
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
@@ -162,6 +166,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, openURL(jiraBrowseURL(m.cfg))
 			}
 		}
+
+	case openErrMsg:
+		m.inputErr = msg.err.Error()
 
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
@@ -239,22 +246,58 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+type openErrMsg struct{ err error }
+
 func openURL(url string) tea.Cmd {
 	return func() tea.Msg {
-		_ = openBrowser(url)
+		if err := openBrowser(url); err != nil {
+			return openErrMsg{err}
+		}
 		return nil
 	}
 }
 
 func openBrowser(url string) error {
-	var cmd *exec.Cmd
-	switch runtime.GOOS {
-	case "darwin":
-		cmd = exec.Command("open", url)
-	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
-	default:
-		cmd = exec.Command("xdg-open", url)
+	for _, c := range browserCommands(url, os.Getenv("BROWSER"), runtime.GOOS, isWSL()) {
+		if _, err := exec.LookPath(c[0]); err != nil {
+			continue
+		}
+		if err := exec.Command(c[0], c[1:]...).Start(); err == nil {
+			return nil
+		}
 	}
-	return cmd.Start()
+	return errors.New("não achei como abrir o navegador; defina a variável BROWSER")
+}
+
+// browserCommands são os jeitos de abrir um link, na ordem em que são
+// tentados. No WSL o xdg-open costuma não existir ou não ter navegador, então
+// o link vai para o navegador do Windows.
+func browserCommands(url, browser, goos string, wsl bool) [][]string {
+	var cmds [][]string
+	if browser != "" {
+		cmds = append(cmds, []string{browser, url})
+	}
+	switch {
+	case goos == "darwin":
+		cmds = append(cmds, []string{"open", url})
+	case goos == "windows":
+		cmds = append(cmds, []string{"rundll32", "url.dll,FileProtocolHandler", url})
+	case wsl:
+		cmds = append(cmds,
+			[]string{"wslview", url},
+			[]string{"rundll32.exe", "url.dll,FileProtocolHandler", url},
+			[]string{"/mnt/c/Windows/System32/rundll32.exe", "url.dll,FileProtocolHandler", url},
+			[]string{"xdg-open", url})
+	default:
+		cmds = append(cmds, []string{"xdg-open", url})
+	}
+	return cmds
+}
+
+func isWSL() bool {
+	if os.Getenv("WSL_DISTRO_NAME") != "" {
+		return true
+	}
+	b, err := os.ReadFile("/proc/sys/kernel/osrelease")
+	return err == nil && strings.Contains(strings.ToLower(string(b)), "microsoft")
 }
