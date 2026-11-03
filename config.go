@@ -202,3 +202,39 @@ func gitFirstName() string {
 	}
 	return ""
 }
+
+func configPath() string { return filepath.Join(configDir(), "config") }
+
+// setConfigKey troca o valor de uma chave no config, ou acrescenta a chave no
+// fim, sem mexer nas outras linhas nem nos comentários.
+func setConfigKey(path, key, value string) error {
+	if real, err := filepath.EvalSymlinks(path); err == nil {
+		path = real
+	}
+	b, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	lines := strings.Split(strings.TrimRight(string(b), "\n"), "\n")
+	if len(b) == 0 {
+		lines = nil
+	}
+	found := false
+	for i, l := range lines {
+		k, _, ok := strings.Cut(strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(l), "export ")), "=")
+		if ok && strings.TrimSpace(k) == key {
+			lines[i], found = key+"="+value, true
+		}
+	}
+	if !found {
+		lines = append(lines, key+"="+value)
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, path)
+}

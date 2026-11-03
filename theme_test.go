@@ -101,3 +101,32 @@ func TestTodosOsTemasRenderizam(t *testing.T) {
 		}
 	}
 }
+
+func TestTemaFicaSalvo(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config")
+	os.WriteFile(path, []byte("# meu config\nNAME=Ana\n# THEME=nord\nTHEME=default\nEMAIL=ana@exemplo.com\n"), 0o600)
+	m := fakeModel(150)
+	m.configFile = path
+	m.theme = defaultTheme
+	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("t")})
+	m = next.(model)
+	defer applyTheme(builtinThemes[0])
+	b, _ := os.ReadFile(path)
+	want := "# meu config\nNAME=Ana\n# THEME=nord\nTHEME=" + m.theme + "\nEMAIL=ana@exemplo.com\n"
+	if string(b) != want {
+		t.Errorf("t deveria gravar só o THEME no config:\n%s\nesperado:\n%s", b, want)
+	}
+	if got := loadTheme(readKV(path)["THEME"]).Name; got != m.theme {
+		t.Errorf("o tema salvo deveria ser %s, veio %s", m.theme, got)
+	}
+}
+
+func TestTemaSemConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "painel", "config")
+	if err := setConfigKey(path, "THEME", "nord"); err != nil {
+		t.Fatal(err)
+	}
+	if b, _ := os.ReadFile(path); string(b) != "THEME=nord\n" {
+		t.Errorf("sem config, deveria criar com só o THEME: %q", b)
+	}
+}

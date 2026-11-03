@@ -142,7 +142,7 @@ Para outra busca, use `JIRA_JQL`. Detalhes em
 
 Sete temas prontos (`default`, `dracula`, `nord`, `gruvbox`, `tokyo-night`,
 `solarized` e `mono`), cada um com suas cores, borda e fonte do relógio. Aperte
-`t` para trocar na hora, ou fixe um no config:
+`t` para trocar na hora (a escolha fica salva no config), ou escreva direto:
 
 ```sh
 THEME=nord

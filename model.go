@@ -53,6 +53,7 @@ type model struct {
 	typing        bool // campo de novo lembrete aberto no rodapé
 	input         string
 	inputErr      string
+	configFile    string
 }
 
 func newModel(cfg config) model {
@@ -62,6 +63,7 @@ func newModel(cfg config) model {
 	return model{
 		reminders:     loadReminders(path),
 		remindersFile: path,
+		configFile:    configPath(),
 		remindersMod:  modTime(path),
 		theme:         t.Name,
 		cfg:           cfg,
@@ -159,6 +161,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t := loadTheme(nextTheme(m.theme))
 			applyTheme(t)
 			m.theme = t.Name
+			if m.configFile != "" {
+				if err := setConfigKey(m.configFile, "THEME", t.Name); err != nil {
+					m.inputErr = "não deu para salvar o tema: " + err.Error()
+				}
+			}
 		case "p":
 			return m, openURL("https://github.com/pulls/review-requested")
 		case "j":

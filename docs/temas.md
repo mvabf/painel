@@ -5,10 +5,13 @@ relógio**.
 
 ## Escolhendo
 
-- **Na hora:** aperte `t` no painel. Ele passa pelos temas em ordem, e o
-  rodapé mostra qual está ativo.
-- **Para sempre:** coloque `THEME=<nome>` no `~/.config/painel/config`. A tecla
-  `t` não grava a escolha, então use o config para manter o tema.
+- **Na hora:** aperte `t` no painel. Ele passa pelos temas em ordem, o rodapé
+  mostra qual está ativo e **a escolha fica salva**: o painel grava
+  `THEME=<nome>` no `~/.config/painel/config` (só essa linha muda; o resto do
+  arquivo fica como está) e abre com esse tema da próxima vez.
+- **Direto no config:** `THEME=<nome>` no `~/.config/painel/config`. Uma
+  variável `PAINEL_THEME` no ambiente tem prioridade sobre o arquivo, então,
+  com ela definida, o tema salvo pelo `t` não vale.
 - **Para comparar:** `painel themes` mostra uma amostra de cada tema no
   terminal.
 
